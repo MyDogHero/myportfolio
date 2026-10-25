@@ -1,0 +1,32 @@
+{
+  "name": "kaustubh-iyer-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Portfolio website of Kaustubh Santosh Iyer, BBA (Hons.) student at T. A. Pai Management Institute, Bengaluru.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "node scripts/build.mjs",
+    "preview": "vite preview --outDir dist/website",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "dependencies": {
+    "@fontsource-variable/besley": "5.3.0",
+    "@fontsource-variable/schibsted-grotesk": "5.3.0",
+    "react": "19.1.0",
+    "react-dom": "19.1.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.3.3",
+    "@types/node": "25.9.6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "5.2.0",
+    "tailwindcss": "4.3.3",
+    "typescript": "5.9.3",
+    "vite": "7.3.6"
+  }
+}

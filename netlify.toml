@@ -1,0 +1,9 @@
+# Used only if the Netlify site is linked to this GitHub repository.
+# Netlify then rebuilds and publishes the site every time a change is saved here.
+
+[build]
+  command = "npm run build"
+  publish = "dist/website"
+
+[build.environment]
+  NODE_VERSION = "22"

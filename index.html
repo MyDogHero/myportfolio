@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Kaustubh Santosh Iyer – Portfolio</title>
+    <meta
+      name="description"
+      content="Portfolio of Kaustubh Santosh Iyer, a BBA (Hons.) student at T. A. Pai Management Institute, Bengaluru, concentrating in Finance and Business Strategy."
+    />
+    <meta name="author" content="Kaustubh Santosh Iyer" />
+    <meta name="robots" content="index, follow" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#f1f0e6" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#141a1e" media="(prefers-color-scheme: dark)" />
+
+    <meta property="og:type" content="profile" />
+    <meta property="og:title" content="Kaustubh Santosh Iyer" />
+    <meta
+      property="og:description"
+      content="BBA (Hons.) student at T. A. Pai Management Institute, Bengaluru. Finance and Business Strategy."
+    />
+    <!-- Link preview image. Becomes a full https:// address when SITE_URL is set at build time. -->
+    <meta property="og:image" content="/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Kaustubh Santosh Iyer, BBA (Hons.) student at T. A. Pai Management Institute, Bengaluru"
+    />
+    <meta property="profile:first_name" content="Kaustubh" />
+    <meta property="profile:last_name" content="Iyer" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="/og-image.png" />
+    <meta name="twitter:title" content="Kaustubh Santosh Iyer" />
+    <meta
+      name="twitter:description"
+      content="BBA (Hons.) student at T. A. Pai Management Institute, Bengaluru. Finance and Business Strategy."
+    />
+
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <!-- Apply the saved (or system) theme before the first paint so the page never flashes. -->
+    <script>
+      (function () {
+        var theme = 'light';
+        try {
+          var saved = window.localStorage.getItem('portfolio-theme');
+          if (saved === 'dark' || saved === 'light') {
+            theme = saved;
+          } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            theme = 'dark';
+          }
+        } catch (e) {
+          if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            theme = 'dark';
+          }
+        }
+        document.documentElement.dataset.theme = theme;
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
