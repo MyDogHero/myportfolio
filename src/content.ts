@@ -8,30 +8,31 @@
  */
 import builtInSource from "../content.js?raw";
 
-export const sections = [
-  { id: "cover", label: "Cover" },
-  { id: "about", label: "About" },
-  { id: "education", label: "Education" },
-  { id: "experience", label: "Experience" },
-  { id: "projects", label: "Projects" },
-  { id: "skills", label: "Skills" },
-  { id: "contact", label: "Contact" },
-] as const;
-
-export type SectionId = (typeof sections)[number]["id"];
-
 export type Profile = {
   name: string;
-  firstLine: string;
-  secondLine: string;
   initials: string;
   role: string;
+  tagline: string;
+  focusLine: string;
   statement: string;
-  stampRim: string;
-  stampYear: string;
+  photo: string;
+  photoAlt: string;
 };
 
+export type Highlight = {
+  code?: string;
+  change?: string;
+  value: string;
+  prefix?: string;
+  suffix?: string;
+  label: string;
+  detail?: string;
+};
+
+export type FocusArea = { title: string; text: string; tags: string[] };
+
 export type About = {
+  headline: string;
   lede: string;
   paragraphs: string[];
   facts: { label: string; value: string }[];
@@ -47,18 +48,25 @@ export type EducationRow = {
   courses?: { label: string; items: string[] };
 };
 
+export type SkillGroup = { group: string; items: string[] };
+
+/* A "Reserved for…" line, kept on purpose for what comes next. */
+export type OpenEntry = { open: true; reservedFor: string };
+
+export type Link = { label: string; url: string };
+
 export type ExperienceEntry =
-  | { open: true; reservedFor: string; lines: number }
+  | OpenEntry
   | {
       open?: false;
       title: string;
       org: string;
       dates?: string;
-      points?: string[];
+      points: string[];
     };
 
 export type ProjectEntry =
-  | { open: true; reservedFor: string; lines: number }
+  | OpenEntry
   | {
       open?: false;
       title: string;
@@ -66,9 +74,9 @@ export type ProjectEntry =
       dates?: string;
       result?: string;
       summary?: string;
-      points?: string[];
+      points: string[];
       skills?: string;
-      link?: { label: string; url: string };
+      link?: Link;
     };
 
 export type CaseStudy = {
@@ -80,26 +88,70 @@ export type CaseStudy = {
   steps: { label: string; text: string }[];
 };
 
-export type SkillGroup = { group: string; items: string[] };
+export type Achievement =
+  | OpenEntry
+  | {
+      open?: false;
+      title: string;
+      context?: string;
+      date?: string;
+      figure?: string;
+      note?: string;
+      text?: string;
+    };
+
+export type Certification =
+  | OpenEntry
+  | {
+      open?: false;
+      title: string;
+      issuer?: string;
+      date?: string;
+      summary?: string;
+      skills?: string;
+      link?: Link;
+    };
 
 export type Contact = {
+  headline: string;
+  text: string;
   email: string;
   linkedinUrl: string;
   linkedinLabel: string;
   location: string;
+  cvFile: string;
+};
+
+export type Headings = {
+  highlights: string;
+  focus: string;
+  education: string;
+  skills: string;
+  roles: string;
+  projects: string;
+  achievements: string;
+  certifications: string;
 };
 
 type Content = {
   profile: Profile;
+  ticker: string[];
+  highlights: Highlight[];
+  focusAreas: FocusArea[];
   about: About;
   education: EducationRow[];
+  skills: SkillGroup[];
+  experienceHeadline: string;
   experienceIntro: string;
   experience: ExperienceEntry[];
   projectsIntro: string;
   projects: ProjectEntry[];
   caseStudy: CaseStudy;
-  skills: SkillGroup[];
+  achievementsHeadline: string;
+  achievements: Achievement[];
+  certifications: Certification[];
   contact: Contact;
+  headings: Headings;
 };
 
 type ContentError = { line?: number; message?: string };
@@ -109,6 +161,8 @@ declare global {
     PORTFOLIO_CONTENT?: unknown;
     /* Set in the single-file copy of the site (see scripts/build.mjs). */
     __PORTFOLIO_STANDALONE?: boolean;
+    /* The live site's address, used by the single-file copy for the CV and photo. */
+    __PORTFOLIO_SITE_URL?: string;
     __PORTFOLIO_CONTENT_ERROR?: ContentError;
   }
 }
@@ -139,63 +193,130 @@ export const contentError: ContentError | null =
 const list = <T,>(value: unknown, fallback: T[] = []): T[] =>
   Array.isArray(value) ? (value as T[]) : fallback;
 
+const text = (value: unknown, fallback = ""): string =>
+  typeof value === "string" ? value : fallback;
+
+/* A field from the visitor's copy of content.js, or the built-in copy if it is missing. */
 function pick<K extends keyof Content>(key: K): Content[K] {
   return (source[key] ?? builtIn[key]) as Content[K];
 }
 
-export const profile: Profile = { ...builtIn.profile, ...pick("profile") };
+const link = (value: Link | undefined): Link | undefined =>
+  value && text(value.url) ? { label: text(value.label, "Open link"), url: value.url } : undefined;
+
+const profileRaw = { ...builtIn.profile, ...pick("profile") } as Partial<Profile>;
+export const profile: Profile = {
+  name: text(profileRaw.name),
+  initials: text(profileRaw.initials),
+  role: text(profileRaw.role),
+  tagline: text(profileRaw.tagline),
+  focusLine: text(profileRaw.focusLine),
+  statement: text(profileRaw.statement),
+  photo: text(profileRaw.photo),
+  photoAlt: text(profileRaw.photoAlt, `Portrait of ${text(profileRaw.name)}`),
+};
+
+export const ticker: string[] = list<string>(pick("ticker")).filter(
+  (item) => typeof item === "string" && item.trim(),
+);
+
+export const highlights: Highlight[] = list<Highlight>(pick("highlights")).filter(
+  (item) => item && text(item.value) && text(item.label),
+);
+
+export const focusAreas: FocusArea[] = list<FocusArea>(pick("focusAreas"))
+  .filter((area) => area && text(area.title))
+  .map((area) => ({ title: area.title, text: text(area.text), tags: list<string>(area.tags) }));
 
 const aboutRaw = pick("about") ?? ({} as About);
 export const about: About = {
-  lede: aboutRaw.lede ?? "",
+  headline: text(aboutRaw.headline, "About"),
+  lede: text(aboutRaw.lede),
   paragraphs: list<string>(aboutRaw.paragraphs),
   facts: list(aboutRaw.facts),
 };
 
-export const education: EducationRow[] = list<EducationRow>(
-  pick("education"),
-).map((row) => ({
-  ...row,
-  courses: row.courses
-    ? { label: row.courses.label ?? "", items: list<string>(row.courses.items) }
-    : undefined,
-}));
-
-export const experienceIntro: string = pick("experienceIntro") ?? "";
-
-export const experience: ExperienceEntry[] = list<ExperienceEntry>(
-  pick("experience"),
-).map((entry) =>
-  entry.open
-    ? { ...entry, lines: Math.max(1, Number(entry.lines) || 2) }
-    : { ...entry, points: list<string>(entry.points) },
+export const education: EducationRow[] = list<EducationRow>(pick("education")).map(
+  (row) => ({
+    ...row,
+    courses: row.courses
+      ? { label: text(row.courses.label), items: list<string>(row.courses.items) }
+      : undefined,
+  }),
 );
 
-export const projectsIntro: string = pick("projectsIntro") ?? "";
+export const skills: SkillGroup[] = list<SkillGroup>(pick("skills")).map((group) => ({
+  ...group,
+  items: list<string>(group.items),
+}));
 
-export const projects: ProjectEntry[] = list<ProjectEntry>(pick("projects")).map(
+export const experienceHeadline: string = text(pick("experienceHeadline"), "Experience.");
+export const experienceIntro: string = text(pick("experienceIntro"));
+
+export const experience: ExperienceEntry[] = list<ExperienceEntry>(pick("experience")).map(
   (entry) =>
     entry.open
-      ? { ...entry, lines: Math.max(1, Number(entry.lines) || 2) }
-      : {
-          ...entry,
-          points: list<string>(entry.points),
-          link: entry.link && entry.link.url ? entry.link : undefined,
-        },
+      ? { open: true, reservedFor: text(entry.reservedFor, "what comes next") }
+      : { ...entry, points: list<string>(entry.points) },
+);
+
+export const projectsIntro: string = text(pick("projectsIntro"));
+
+export const projects: ProjectEntry[] = list<ProjectEntry>(pick("projects")).map((entry) =>
+  entry.open
+    ? { open: true, reservedFor: text(entry.reservedFor, "what comes next") }
+    : { ...entry, points: list<string>(entry.points), link: link(entry.link) },
 );
 
 const caseRaw = pick("caseStudy") ?? ({} as CaseStudy);
 export const caseStudy: CaseStudy = {
   open: caseRaw.open !== false,
-  kicker: caseRaw.kicker ?? "Selected case study",
-  reservedFor: caseRaw.reservedFor ?? "a case study",
-  title: caseRaw.title ?? "",
-  summary: caseRaw.summary ?? "",
+  kicker: text(caseRaw.kicker, "Selected case study"),
+  reservedFor: text(caseRaw.reservedFor, "a case study"),
+  title: text(caseRaw.title),
+  summary: text(caseRaw.summary),
   steps: list(caseRaw.steps),
 };
 
-export const skills: SkillGroup[] = list<SkillGroup>(pick("skills")).map(
-  (group) => ({ ...group, items: list<string>(group.items) }),
+export const achievementsHeadline: string = text(pick("achievementsHeadline"), "Achievements.");
+
+export const achievements: Achievement[] = list<Achievement>(pick("achievements")).map(
+  (entry) =>
+    entry.open ? { open: true, reservedFor: text(entry.reservedFor, "what comes next") } : entry,
 );
 
-export const contact: Contact = { ...builtIn.contact, ...pick("contact") } as Contact;
+export const certifications: Certification[] = list<Certification>(pick("certifications")).map(
+  (entry) =>
+    entry.open
+      ? { open: true, reservedFor: text(entry.reservedFor, "what comes next") }
+      : { ...entry, link: link(entry.link) },
+);
+
+const contactRaw = { ...builtIn.contact, ...pick("contact") } as Partial<Contact>;
+export const contact: Contact = {
+  headline: text(contactRaw.headline, "Get in touch."),
+  text: text(contactRaw.text),
+  email: text(contactRaw.email),
+  linkedinUrl: text(contactRaw.linkedinUrl),
+  linkedinLabel: text(contactRaw.linkedinLabel, "LinkedIn"),
+  location: text(contactRaw.location),
+  cvFile: text(contactRaw.cvFile),
+};
+
+const headingDefaults: Headings = {
+  highlights: "Key figures",
+  focus: "Focus areas",
+  education: "Education",
+  skills: "Skills",
+  roles: "Roles",
+  projects: "Projects",
+  achievements: "Achievements",
+  certifications: "Certifications",
+};
+const headingsRaw = (pick("headings") ?? {}) as Partial<Headings>;
+export const headings: Headings = Object.fromEntries(
+  Object.entries(headingDefaults).map(([key, fallback]) => [
+    key,
+    text(headingsRaw[key as keyof Headings], fallback),
+  ]),
+) as Headings;
