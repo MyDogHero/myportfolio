@@ -345,7 +345,7 @@ export function buildSpeaker() {
 
 /* -------------------------------------------------------------- football */
 
-/* A low-poly football in Arsenal red and white. It hops when pointed at. */
+/* A low-poly football in classic black and white. It hops when pointed at. */
 export function buildFootball() {
   const geometry = new THREE.IcosahedronGeometry(0.11, 1).toNonIndexed();
   const corners = new THREE.IcosahedronGeometry(1, 0);
