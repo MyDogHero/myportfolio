@@ -101,8 +101,8 @@ you can copy.
   up like a rising stock.
 - **The neon sign** → `sign` (near the top, in `profile`).
 - **The book you're reading** → `reading`: the title, the author and a short
-  note on why you're reading it. The book lies open, pages up, on the right
-  of the desk. Clicking it (or "Why I'm reading it" in About) opens
+  note on why you're reading it. The book lies open, pages up, at the
+  right-hand edge of the desk (the phone and business card sit to its left). Clicking it (or "Why I'm reading it" in About) opens
   `/currently-reading/`: your chair rolls back and turns to face the room,
   you pick the book up and read it (visitors see the cover), and a panel
   beside you shows the book and your note. Set the title to `""` to hide it.

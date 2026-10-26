@@ -452,7 +452,7 @@ export function buildRoom(options: { still: boolean }): Room {
   businessCard.position.set(0, 0.045, 0.005);
   businessCard.rotation.x = -0.35;
   cardStand.add(businessCard);
-  cardStand.position.set(deskX + 1.08, 0.83, deskZ + 0.12);
+  cardStand.position.set(deskX + 0.6, 0.83, deskZ + 0.1);
   cardStand.rotation.y = -0.5;
   group.add(phone, cardStand);
 
@@ -517,7 +517,9 @@ export function buildRoom(options: { still: boolean }): Room {
 
   /* ------------------------------------- the book: currently reading */
 
-  // The book lies open, pages up, on the right of the desk. Opening
+  // The book lies open, pages up, at the right-hand edge of the desk (with
+  // the phone and business card to its left, so they never get in each
+  // other's way). Opening
   // "Currently reading" rolls the chair back, swivels it round to face the
   // room, and floats the book into Kaustubh's hands: first forward past his
   // right side (clear of the chair), then straight across into his hands. The
@@ -531,9 +533,9 @@ export function buildRoom(options: { still: boolean }): Room {
     group.add(book.group);
     // Resting: open and nearly flat, pages up (book +z → up), its top towards the back of the desk (book +y → -z).
     const restFold = 0.12;
-    const restPosition = v(deskX + 0.62, 0.828, deskZ + 0.06);
+    const restPosition = v(deskX + 1.15, 0.828, deskZ + 0.22);
     const restQuaternion = new THREE.Quaternion()
-      .setFromAxisAngle(v(0, 1, 0), -0.2)
+      .setFromAxisAngle(v(0, 1, 0), -0.25)
       .multiply(new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(v(1, 0, 0), v(0, 0, -1), v(0, 1, 0))));
     book.setFold(restFold);
     // On the way, the book passes this far to his right (to the viewer's right) before moving across.
@@ -586,6 +588,8 @@ export function buildRoom(options: { still: boolean }): Room {
       const leg = smooth(0, 0.55, lift);
       const across = smooth(0.55, 1, lift);
       book.group.position.lerpVectors(restPosition, waypoint, leg).lerp(heldPosition, across);
+      // A little lift on the first leg as it leaves the desk.
+      book.group.position.y += Math.sin(leg * Math.PI) * 0.15 * (1 - across);
       book.group.quaternion.slerpQuaternions(restQuaternion, heldQuaternion, smooth(0, 0.8, lift));
       book.setFold(restFold + (0.42 - restFold) * lift);
     });
