@@ -7,22 +7,34 @@ T. A. Pai Management Institute, Bengaluru.
 
 ## What the site is
 
-The home page is a **3D office at night in Bengaluru**: an analyst's desk.
-Every object in the room is part of the portfolio. Floating lime ▲ markers
-show what can be clicked:
+The home page is a **3D office in Bengaluru**, lit in Science Blue: you at
+your desk, typing, with an Indie dog on the couch. Every object in the room is
+part of the portfolio. Floating blue ▲ markers show what can be clicked:
 
 | Object in the room | Opens | Address |
 | --- | --- | --- |
 | Twin trading monitors (live chart + terminal) | About | `/about/` |
 | Bookshelf (the spines are your real courses) | Education | `/education/` |
 | Pegboard with lanyard ID cards | Experience & projects | `/experience/` |
-| Trophy shelf, medals and framed certificate | Achievements & certifications | `/achievements/` |
+| Trophy shelf, medals and framed certificates | Achievements & certifications | `/achievements/` |
 | Phone and business card on the desk | Contact (with Download CV) | `/contact/` |
+| The football by the couch (no marker: a secret) | Off the clock (Arsenal, your Taekwondo record) | `/off-the-clock/` |
 
 Clicking an object flies the camera to it and slides in a panel with the
-details. The pill menu at the bottom does the same. The window shows the
-Bengaluru skyline with a passing metro, an LED ticker runs your results along
-the wall, and the clock shows Bengaluru time.
+details. The pill menu at the bottom does the same (the football's section is
+left out of the menu on purpose, so visitors have to find it).
+
+**The room follows the real time in Bengaluru.** The window shows night,
+dawn, day or dusk over the skyline, the light in the room changes with it, and
+the dog sleeps at night (with little purple zZ) and is awake from 6:30 in the
+morning to 7 in the evening. To preview another time, add `?hour=` to the
+address, for example `kaustubhiyer.netlify.app/?hour=13` for one in the
+afternoon. A metro passes the window, an LED ticker runs your results along
+the wall, and the wall clock shows Bengaluru time.
+
+**Sound.** Clicks, opening and closing panels, and pointing at objects make
+small sounds. They are made in the browser (no audio files). Visitors can
+switch them off with the speaker button at the top; the site remembers.
 
 There is also a **Text version** button (top right): the same content as one
 plain scrolling page. It is used automatically on devices that can't show 3D,
@@ -42,7 +54,7 @@ trophy plate).
    site updates by itself in a minute or two.
 
 The top of the file explains the rules: keep straight quotes, commas and
-brackets. Words written between *stars* show in the lime italic accent style.
+brackets. Words written between *stars* show in the blue italic accent style.
 If you make a mistake, the site still opens and shows a red notice naming the
 line to fix.
 
@@ -79,12 +91,48 @@ you can copy.
   `achievements`. It appears in the Achievements panel, and the first three
   get a medal on the trophy shelf.
 - **A new certification** → add it to `certifications` (paste the
-  certificate link into `link`). The first two hang as framed certificates on
-  the wall.
+  certificate link into `link`). The first three hang as framed certificates
+  on the wall.
+- **Your interests** (the football's secret section) → `easterEgg`. Fill in
+  the year of your Taekwondo record and, if there is one online, a link to it.
 - **A project or case study** → `projects` and `caseStudy`.
 - **The ticker on the wall** → `ticker`. Put a ▲ in an item to make it light
   up like a rising stock.
+- **The neon sign** → `sign` (near the top, in `profile`).
 
+## Music on the speaker
+
+The speaker next to the couch can play songs, with a small "Now playing" card
+that shows the song and skips between them. It stays silent (and can't be
+clicked) until you add songs to `music` in `content.js`.
+
+**About copyright.** Classic Bollywood songs are almost all still under
+copyright in India: the recording, and separately the music and the lyrics,
+which stay protected until 60 years after the composer and lyricist have
+died. So "old" doesn't mean free to use, and putting audio files of these
+songs on the site would need a licence.
+
+The simple, legal way is to **use YouTube links to the songs' official
+uploads** (for example from the Saregama Music channel). The site then plays
+them in YouTube's own small player inside the card, as YouTube allows. For each
+song, add its title, singer, film and link:
+
+```js
+songs: [
+  {
+    title: "Lag Jaa Gale",
+    artist: "Lata Mangeshkar",
+    film: "Woh Kaun Thi? (1964)",
+    youtube: "https://www.youtube.com/watch?v=…",
+  },
+],
+```
+
+Use links from official channels, check that the video says it can be
+embedded (if it can't, the card skips it and says so), and don't upload song
+files unless you have permission. A recording you own or have a licence for
+can go in `public/music/` and be listed with `file: "music/name.mp3"`
+instead of `youtube:`.
 ## Publishing
 
 **Automatic (recommended).** Link the Netlify site to this repository once:
@@ -110,7 +158,7 @@ build uses `SITE_URL` if set, otherwise Netlify's own address, otherwise
 
 ```
 ├── content.js            All the text on the site (edit this one)
-├── index.html            The page shell: title, link-preview tags, fonts
+├── index.html            The page shell: title, link-preview tags, fonts, loading screen
 ├── netlify.toml          Tells Netlify how to build and publish the site
 ├── package.json          The packages the site needs, and its commands
 ├── public/
@@ -126,11 +174,16 @@ build uses `SITE_URL` if set, otherwise Netlify's own address, otherwise
     ├── router.ts         The sections and their web addresses
     ├── sections.tsx      What each panel shows (About, Education, …)
     ├── motion.ts         Animation helpers (GSAP)
+    ├── sound.ts          The click and open/close sounds
+    ├── boot.ts           Lifts the loading screen once the room is ready
     ├── styles.css        All the styling
-    ├── components/       Menu, panel, labels, loading screen, text version
+    ├── components/       Menu, panel, labels, Now Playing card, text version
     └── scene/            The 3D room (three.js)
         ├── room.ts       Every object in the room, built from simple shapes
+        ├── props.ts      You at the desk, the couch and dog, speaker, football
+        ├── kit.ts        Small shared building blocks for the shapes
         ├── textures.ts   Everything drawn onto objects (cards, spines, ticker…)
+        ├── daylight.ts   The time of day in Bengaluru
         └── world.ts      Camera, lights, glow, hover and click
 ```
 

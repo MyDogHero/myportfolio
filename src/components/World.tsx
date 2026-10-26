@@ -1,11 +1,22 @@
 import { useEffect, useRef, useState } from "react";
-import { profile } from "@/content";
+import { bootDone, bootProgress } from "@/boot";
+import { music } from "@/content";
 import { prefersReducedMotion, waitForFonts } from "@/motion";
 import { type RouteId, routes } from "@/router";
-import type { Focus, PanelSide, World as WorldEngine } from "@/scene/world";
 import type { HotspotId } from "@/scene/room";
+import type { Focus, PanelSide, World as WorldEngine } from "@/scene/world";
+import { play } from "@/sound";
 
-const hotspotIds: HotspotId[] = ["about", "education", "experience", "achievements", "contact"];
+/* The objects with a label button: the five sections, the football, and the speaker when there are songs. */
+const hotspotIds: HotspotId[] = [
+  "about",
+  "education",
+  "experience",
+  "achievements",
+  "contact",
+  "easter",
+  ...(music.songs.length ? (["radio"] as const) : []),
+];
 const pad = (n: number) => String(n).padStart(2, "0");
 
 export function webglAvailable() {
@@ -17,36 +28,56 @@ export function webglAvailable() {
   }
 }
 
+/* What each label button says. */
+function labelFor(id: HotspotId, radioOn: boolean) {
+  if (id === "radio") return { num: "♪", label: radioOn ? "Now playing" : "Play music", object: "Speaker", kind: "radio" };
+  if (id === "easter") return { num: "?", label: "Kick it", object: "Football", kind: "secret" };
+  const index = routes.findIndex((item) => item.id === id);
+  return { num: pad(index), label: routes[index].label, object: routes[index].object, kind: "section" };
+}
+
 /*
- * The 3D room. three.js and the room load after the page appears; until
- * then a loading screen counts up. If the device can't show 3D, `onFail`
- * switches the site to its text version.
+ * The 3D room. three.js and the room load after the page appears, while the
+ * loading screen (in index.html) counts up. If the device can't show 3D,
+ * `onFail` switches the site to its text version.
  */
 export function World({
   focus,
   panel,
   active,
+  playing,
+  radioOn,
   onSelect,
+  onRadio,
   onFail,
 }: {
   focus: RouteId;
   panel: PanelSide;
   active: boolean;
+  playing: boolean;
+  radioOn: boolean;
   onSelect: (id: RouteId) => void;
+  onRadio: () => void;
   onFail: () => void;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<WorldEngine | null>(null);
   const labelRefs = useRef(new Map<HotspotId, HTMLButtonElement>());
   const selectRef = useRef(onSelect);
+  const radioRef = useRef(onRadio);
   const failRef = useRef(onFail);
   const focusRef = useRef({ focus, panel });
-  const [progress, setProgress] = useState(0);
   const [ready, setReady] = useState(false);
   const [hovered, setHovered] = useState<HotspotId | null>(null);
   selectRef.current = onSelect;
+  radioRef.current = onRadio;
   failRef.current = onFail;
   focusRef.current = { focus, panel };
+
+  const choose = (id: HotspotId) => {
+    if (id === "radio") radioRef.current();
+    else selectRef.current(id);
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -58,20 +89,23 @@ export function World({
       return;
     }
     (async () => {
-      setProgress(12);
+      bootProgress(62);
       await waitForFonts();
       if (cancelled) return;
-      setProgress(38);
+      bootProgress(70);
       const { World: Engine } = await import("@/scene/world");
       if (cancelled) return;
-      setProgress(72);
+      bootProgress(86);
       // Give the counter a frame to paint before the room is built.
       await new Promise((resolve) => requestAnimationFrame(resolve));
       engine = new Engine({
         canvas,
         still: prefersReducedMotion(),
-        onSelect: (id) => selectRef.current(id),
-        onHover: setHovered,
+        onSelect: (id) => choose(id),
+        onHover: (id) => {
+          setHovered(id);
+          if (id) play("hover");
+        },
       });
       engineRef.current = engine;
       labelRefs.current.forEach((element, id) => engine?.setLabel(id, element));
@@ -79,8 +113,8 @@ export function World({
       engine.focusOn(start as Focus, side, true);
       if (start === "home") engine.intro();
       engine.renderOnce();
-      setProgress(100);
       engine.start();
+      bootDone();
       window.setTimeout(() => !cancelled && setReady(true), 350);
     })().catch((error) => {
       console.error(error);
@@ -91,11 +125,16 @@ export function World({
       engine?.dispose();
       engineRef.current = null;
     };
+    // The room is built once; `choose` reads the latest handlers through refs.
   }, []);
 
   useEffect(() => {
     engineRef.current?.focusOn(focus as Focus, panel);
   }, [focus, panel]);
+
+  useEffect(() => {
+    engineRef.current?.setPlaying(playing);
+  }, [playing, ready]);
 
   useEffect(() => {
     const engine = engineRef.current;
@@ -110,12 +149,11 @@ export function World({
         ref={canvasRef}
         className="world-canvas"
         role="img"
-        aria-label="A 3D office at night. Each object opens a section; use the labelled markers or the menu at the bottom."
+        aria-label="A 3D office in Bengaluru. Each object opens a section; use the labelled markers or the menu at the bottom."
       />
       <div className="hotspots">
         {hotspotIds.map((id) => {
-          const index = routes.findIndex((item) => item.id === id);
-          const route = routes[index];
+          const { num, label, object, kind } = labelFor(id, radioOn);
           return (
             <button
               type="button"
@@ -126,34 +164,22 @@ export function World({
                 engineRef.current?.setLabel(id, element);
               }}
               className="hotspot"
+              data-kind={kind}
               data-visible="false"
               data-hovered={hovered === id}
-              onClick={() => onSelect(id)}
+              data-sound={kind === "section" ? undefined : "none"}
+              aria-label={kind === "secret" ? "Football: a hidden section" : undefined}
+              onClick={() => choose(id)}
               tabIndex={focus === "home" && ready ? 0 : -1}
             >
               <span className="hotspot-pill">
-                <span className="hotspot-num">{pad(index)}</span>
-                <span className="hotspot-label">{route.label}</span>
-                <span className="hotspot-object">{route.object}</span>
+                <span className="hotspot-num">{num}</span>
+                <span className="hotspot-label">{label}</span>
+                <span className="hotspot-object">{object}</span>
               </span>
             </button>
           );
         })}
-      </div>
-      <div className="loader" aria-hidden={ready} data-done={ready}>
-        <div className="loader-inner">
-          <p className="loader-top">
-            <span>{profile.name}</span>
-            <span>Portfolio</span>
-          </p>
-          <p className="loader-line">Switching on the desk lamp…</p>
-          <p className="loader-count" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
-            {String(progress).padStart(3, "0")}
-          </p>
-          <span className="loader-bar">
-            <span style={{ transform: `scaleX(${progress / 100})` }} />
-          </span>
-        </div>
       </div>
     </div>
   );

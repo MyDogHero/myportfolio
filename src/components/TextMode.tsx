@@ -1,17 +1,22 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
+import { bootDone } from "@/boot";
 import { profile } from "@/content";
 import { useReveal } from "@/motion";
-import { Section, sectionIds } from "@/sections";
+import type { RouteId } from "@/router";
+import { Section, type SectionId, sectionIds } from "@/sections";
 import { Rich } from "./ui";
 
 /*
  * The plain version of the site: every section on one scrolling page. It is
  * used when 3D isn't available, when a visitor picks "Text version", and
- * for printing.
+ * for printing. The hidden football section only appears here if its own
+ * address was opened.
  */
-export function TextMode() {
+export function TextMode({ current }: { current: RouteId }) {
   const ref = useRef<HTMLDivElement>(null);
   useReveal(ref, "scroll");
+  useEffect(() => bootDone(), []);
+  const ids: SectionId[] = current === "easter" ? [...sectionIds, "easter"] : sectionIds;
   return (
     <div className="textmode" ref={ref}>
       <header className="tm-hero">
@@ -27,7 +32,7 @@ export function TextMode() {
           </p>
         ) : null}
       </header>
-      {sectionIds.map((id) => (
+      {ids.map((id) => (
         <section className="tm-section" id={id} key={id} aria-labelledby={`tm-${id}-title`}>
           <Section id={id} mode="scroll" idPrefix="tm-" />
         </section>

@@ -4,6 +4,7 @@ import {
   type ErrorInfo,
   type ReactNode,
 } from 'react';
+import { bootDone } from '@/boot';
 
 export interface ErrorFallbackProps {
   error: Error;
@@ -62,6 +63,8 @@ export class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: unknown, info: ErrorInfo): void {
+    // Lift the loading screen so the message can be seen.
+    bootDone();
     console.error(
       'ErrorBoundary caught an error:',
       toError(error),

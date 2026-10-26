@@ -37,12 +37,16 @@ window.PORTFOLIO_CONTENT = {
     name: "Kaustubh Santosh Iyer",
     initials: "KSI", // shown in the navigation bar and in place of a photo
     role: "BBA (Hons.) student at T. A. Pai Management Institute, Bengaluru",
-    // The one line under your name on the home page (*stars* = accent style):
+    // A short line under your name in the text version (*stars* = accent style):
     tagline: "I build the analysis that makes decisions *clearer*.",
-    // Your areas in a few words, shown in the home page corner and on your badge:
+    // Your areas in a few words, shown on the business card and monitor:
     focusLine: "Finance × Business Strategy",
-    // The large sentence that lights up word by word as visitors scroll.
-    // Words between *stars* are shown in the accent colour and italic serif.
+    // The line under your name at the bottom of the screen:
+    nameLine: "Student at T.A. Pai Management Institute",
+    // The glowing neon sign above the window:
+    sign: "My Portfolio",
+    // The sentence shown as a quote in the About panel. Words between *stars*
+    // are shown in the accent colour and italic serif.
     statement: "I study how organizations make decisions under *uncertainty*, and I build the analysis that makes those decisions *clearer*.",
     // PLACEHOLDER: your photo. Upload it into the "public" folder, then write
     // its file name here, e.g. "photo.jpg". A portrait (taller than wide)
@@ -51,7 +55,7 @@ window.PORTFOLIO_CONTENT = {
     photoAlt: "Portrait of Kaustubh Santosh Iyer",
   },
 
-  // The two stock-ticker tapes that run across the home page. Add or remove
+  // The LED ticker that runs along the wall above the window. Add or remove
   // items freely. A ▲ makes the item light up like a rising stock.
   ticker: [
     "MHT-CET 96.14 ▲ Top 4%",
@@ -313,6 +317,15 @@ window.PORTFOLIO_CONTENT = {
       // PLACEHOLDER: paste the link to your Forage certificate between the quotes.
       link: { label: "View certificate", url: "" },
     },
+    {
+      title: "McKinsey Forward Program",
+      issuer: "McKinsey & Company",
+      date: "", // PLACEHOLDER: month and year you joined or completed it
+      summary: "McKinsey Forward Learner: McKinsey’s learning programme for early-career professionals, covering structured problem solving, communication and adaptability.",
+      skills: "Problem solving, communication",
+      // PLACEHOLDER: paste the link to your McKinsey Forward badge or certificate.
+      link: { label: "View credential", url: "" },
+    },
     { open: true, reservedFor: "the next certification" },
   ],
 
@@ -330,6 +343,58 @@ window.PORTFOLIO_CONTENT = {
     // text. Replace it with your own PDF (upload it with the same name, or
     // upload it under a new name and change the name here).
     cvFile: "Kaustubh-Santosh-Iyer-CV.pdf",
+  },
+
+  // =========================================================== EASTER EGG ==
+  // A hidden section. It opens only when a visitor clicks the football in the
+  // room; it isn't in the menu or the text version.
+  easterEgg: {
+    kicker: "You found the football",
+    headline: "Off the *clock*.",
+    intro: "A couple of things that matter to me outside the classroom.",
+    items: [
+      {
+        tag: "Football",
+        title: "Arsenal FC",
+        text: "A proud Gooner. Arsenal is my club: win, lose or draw.",
+        theme: "arsenal", // red and white
+      },
+      {
+        tag: "Taekwondo",
+        title: "World record holder",
+        record: "Maximum students performed Taekwondo punches in 30 minutes",
+        issuer: "World Records India",
+        date: "", // PLACEHOLDER: the year of the record
+        text: "",
+        // PLACEHOLDER: paste a link to the record certificate, if there is one online.
+        link: { label: "View record", url: "" },
+        theme: "record",
+      },
+    ],
+  },
+
+  // ================================================================ MUSIC ==
+  // The speaker in the room plays these songs, with a small "Now playing"
+  // card that shows the song and can skip between them. Each song needs a
+  // title and EITHER:
+  //   youtube: the song's YouTube link. Best: an official upload from the
+  //            record label's own channel (for example Saregama Music), so
+  //            the label has licensed it. The video shows in the card.
+  //   file:    the name of an audio file you have uploaded into the folder
+  //            public/music/ (only for recordings you have permission to use).
+  //
+  //     {
+  //       title: "Song title",
+  //       artist: "Singer",
+  //       film: "Film (year)",
+  //       youtube: "https://www.youtube.com/watch?v=...",
+  //     },
+  //
+  // PLACEHOLDER: add your songs here. While the list is empty, the speaker
+  // stays in the room as decoration and can't be clicked.
+  music: {
+    title: "Radio KSI",
+    songs: [],
   },
 
   // ====================================================== SECTION TITLES ==

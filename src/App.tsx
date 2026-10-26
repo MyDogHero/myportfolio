@@ -1,14 +1,16 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { Hud } from "@/components/Hud";
+import { NowPlaying } from "@/components/NowPlaying";
 import { Panel } from "@/components/Panel";
 import { TextMode } from "@/components/TextMode";
 import { World, webglAvailable } from "@/components/World";
-import { contentError } from "@/content";
+import { contentError, music } from "@/content";
 import { ScrollTrigger, prefersReducedMotion, waitForFonts } from "@/motion";
 import { type RouteId, RouterContext, currentRoute, hashMode, hrefFor, titleFor } from "@/router";
 import type { PanelSide } from "@/scene/world";
 import type { SectionId } from "@/sections";
+import { play } from "@/sound";
 
 const TEXT_KEY = "ksi-text-version";
 
@@ -42,6 +44,8 @@ export default function App() {
     const start = currentRoute();
     return start === "home" ? null : start;
   });
+  const [radioOn, setRadioOn] = useState(false);
+  const [playing, setPlaying] = useState(false);
   const narrow = useMedia(NARROW);
   const routeRef = useRef(route);
   routeRef.current = route;
@@ -58,6 +62,8 @@ export default function App() {
         window.history.pushState(null, "", hrefFor(id));
       }
       document.title = titleFor(id);
+      // Opening a section chimes up, going back to the room chimes down; the football gets a fanfare.
+      if (!textMode && id !== routeRef.current) play(id === "easter" ? "secret" : id === "home" ? "close" : "open");
       setRoute(id);
       if (id !== "home") setLastSection(id);
       if (textMode) scrollToSection(id);
@@ -134,6 +140,12 @@ export default function App() {
 
   const fail = useCallback(() => setTextMode(true), []);
 
+  const toggleRadio = useCallback(() => {
+    play("toggle");
+    setRadioOn((on) => !on);
+  }, []);
+  const closeRadio = useCallback(() => setRadioOn(false), []);
+
   const panelOpen = !textMode && route !== "home";
   const panelSide: PanelSide = panelOpen ? (narrow ? "bottom" : "right") : "none";
   const router = useMemo(() => ({ current: route, go }), [route, go]);
@@ -159,10 +171,21 @@ export default function App() {
 
       <main id="main" className={textMode ? "is-text" : "is-room"}>
         {webglAvailable() ? (
-          <World focus={textMode ? "home" : route} panel={panelSide} active={!textMode} onSelect={go} onFail={fail} />
+          <World
+            focus={textMode ? "home" : route}
+            panel={panelSide}
+            active={!textMode}
+            playing={playing}
+            radioOn={radioOn}
+            onSelect={go}
+            onRadio={toggleRadio}
+            onFail={fail}
+          />
         ) : null}
-        {textMode ? <TextMode /> : <Panel section={lastSection} open={panelOpen} />}
+        {textMode ? <TextMode current={route} /> : <Panel section={lastSection} open={panelOpen} />}
       </main>
+
+      {radioOn && music.songs.length ? <NowPlaying compact={panelSide === "bottom"} onClose={closeRadio} onPlayingChange={setPlaying} /> : null}
 
       <Hud textMode={textMode} onToggleText={toggleText} />
       <div className="grain" aria-hidden="true" />

@@ -1,8 +1,9 @@
 /*
  * Everything drawn onto objects in the room: ID cards, book spines, monitor
- * screens, the LED ticker, the skyline outside the window, the certificate,
- * the clock face and so on. All of it is drawn on canvases from the words in
- * content.js, so editing that file updates the room too.
+ * screens, the LED ticker, the sky and skyline outside the window, the
+ * certificates, the clock face, the neon sign and so on. All of it is drawn
+ * on canvases from the words in content.js, so editing that file updates the
+ * room too.
  */
 import * as THREE from "three";
 
@@ -10,9 +11,15 @@ export const MONO = '"JetBrains Mono", ui-monospace, monospace';
 export const SANS = '"Archivo", "Helvetica Neue", Arial, sans-serif';
 export const SERIF = '"Instrument Serif", Georgia, serif';
 
-export const LIME = "#c8f53c";
+/* Science Blue, YInMn Blue, and a lighter blue for things that glow. */
+export const SCIENCE = "#0066cc";
+export const YINMN = "#2e5090";
+export const GLOW = "#4d9bff";
 export const SLATE = "#141a1e";
 export const INK = "#eceae2";
+export const DREAM = "#a77bff"; // the dog's zZ
+
+export type Phase = "night" | "dawn" | "day" | "dusk";
 
 export function makeCanvas(width: number, height: number) {
   const canvas = document.createElement("canvas");
@@ -88,12 +95,21 @@ function roundRect(ctx: CanvasRenderingContext2D, x: number, y: number, w: numbe
   ctx.roundRect(x, y, w, h, r);
 }
 
+/* A seeded random number generator, so the skyline keeps its shape between redraws. */
+function seeded(seed: number) {
+  let s = seed;
+  return () => {
+    s = (s * 16807) % 2147483647;
+    return (s - 1) / 2147483646;
+  };
+}
+
 /* ------------------------------------------------------------- surfaces */
 
 /* Slate wall panels with fine seams. */
 export function wallTexture() {
   const { canvas, ctx } = makeCanvas(1024, 1024);
-  ctx.fillStyle = "#192025";
+  ctx.fillStyle = "#192027";
   ctx.fillRect(0, 0, 1024, 1024);
   const cols = 2;
   const rows = 3;
@@ -102,8 +118,8 @@ export function wallTexture() {
       const x = (c * 1024) / cols;
       const y = (r * 1024) / rows;
       const g = ctx.createLinearGradient(x, y, x + 512, y + 341);
-      g.addColorStop(0, "#1f272c");
-      g.addColorStop(1, "#182024");
+      g.addColorStop(0, "#1f2730");
+      g.addColorStop(1, "#182028");
       ctx.fillStyle = g;
       ctx.fillRect(x + 4, y + 4, 1024 / cols - 8, 1024 / rows - 8);
     }
@@ -140,12 +156,12 @@ export function floorTexture() {
 
 export function rugTexture() {
   const { canvas, ctx } = makeCanvas(1024, 768);
-  ctx.fillStyle = "#20282d";
+  ctx.fillStyle = "#1d2531";
   ctx.fillRect(0, 0, 1024, 768);
-  ctx.strokeStyle = "#3a4349";
+  ctx.strokeStyle = "#384456";
   ctx.lineWidth = 18;
   ctx.strokeRect(40, 40, 944, 688);
-  ctx.strokeStyle = LIME;
+  ctx.strokeStyle = GLOW;
   ctx.globalAlpha = 0.5;
   ctx.lineWidth = 4;
   ctx.strokeRect(80, 80, 864, 608);
@@ -164,9 +180,9 @@ export function rugTexture() {
 /* A pegboard: dark board with rows of holes. */
 export function pegboardTexture() {
   const { canvas, ctx } = makeCanvas(1024, 480);
-  ctx.fillStyle = "#11161a";
+  ctx.fillStyle = "#11161c";
   ctx.fillRect(0, 0, 1024, 480);
-  ctx.fillStyle = "#05080a";
+  ctx.fillStyle = "#05080b";
   for (let x = 24; x < 1024; x += 28) {
     for (let y = 22; y < 480; y += 28) {
       ctx.beginPath();
@@ -177,80 +193,168 @@ export function pegboardTexture() {
   return canvas;
 }
 
+/* Couch fabric: a fine weave. */
+export function fabricTexture(base: string) {
+  const { canvas, ctx } = makeCanvas(256, 256);
+  ctx.fillStyle = base;
+  ctx.fillRect(0, 0, 256, 256);
+  ctx.globalAlpha = 0.08;
+  ctx.fillStyle = "#000";
+  for (let i = 0; i < 256; i += 4) {
+    ctx.fillRect(i, 0, 1, 256);
+    ctx.fillRect(0, i, 256, 1);
+  }
+  ctx.globalAlpha = 1;
+  noise(ctx, 256, 256, 16);
+  return canvas;
+}
+
 /* ----------------------------------------------------------- the window */
 
-/* The night sky over Bengaluru, with stars, a moon and distant towers. */
-export function skyTexture() {
+const SKIES: Record<Phase, [number, string][]> = {
+  night: [
+    [0, "#060a1a"],
+    [0.45, "#141a42"],
+    [0.72, "#3a2a5a"],
+    [0.9, "#8a4a50"],
+    [1, "#c9783f"],
+  ],
+  dawn: [
+    [0, "#1c2756"],
+    [0.4, "#5a5c96"],
+    [0.68, "#d98c88"],
+    [0.86, "#f6b47a"],
+    [1, "#ffdca0"],
+  ],
+  day: [
+    [0, "#2f73d6"],
+    [0.45, "#6aa6ec"],
+    [0.8, "#b9d8f6"],
+    [1, "#e3eef8"],
+  ],
+  dusk: [
+    [0, "#1d2160"],
+    [0.4, "#62408a"],
+    [0.66, "#d0607a"],
+    [0.86, "#ff8f52"],
+    [1, "#ffc66e"],
+  ],
+};
+
+/* The sky over Bengaluru for the time of day: stars and moon at night, sun and clouds by day. */
+export function skyTexture(phase: Phase) {
   const { canvas, ctx } = makeCanvas(2048, 1024);
   const sky = ctx.createLinearGradient(0, 0, 0, 1024);
-  sky.addColorStop(0, "#070b1a");
-  sky.addColorStop(0.45, "#1a1840");
-  sky.addColorStop(0.72, "#4a2a55");
-  sky.addColorStop(0.9, "#a0524a");
-  sky.addColorStop(1, "#d9824a");
+  SKIES[phase].forEach(([stop, colour]) => sky.addColorStop(stop, colour));
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, 2048, 1024);
-  for (let i = 0; i < 260; i += 1) {
-    ctx.fillStyle = `rgba(255,255,255,${Math.random() * 0.7})`;
-    ctx.fillRect(Math.random() * 2048, Math.random() * 520, 2, 2);
+  const random = seeded(7);
+
+  if (phase === "night" || phase === "dawn") {
+    for (let i = 0; i < (phase === "night" ? 260 : 60); i += 1) {
+      ctx.fillStyle = `rgba(255,255,255,${random() * (phase === "night" ? 0.75 : 0.35)})`;
+      ctx.fillRect(random() * 2048, random() * 520, 2, 2);
+    }
   }
-  const moon = ctx.createRadialGradient(1500, 190, 10, 1500, 190, 150);
-  moon.addColorStop(0, "rgba(255,244,220,1)");
-  moon.addColorStop(0.28, "rgba(255,236,200,0.95)");
-  moon.addColorStop(0.32, "rgba(255,220,180,0.25)");
-  moon.addColorStop(1, "rgba(255,200,160,0)");
-  ctx.fillStyle = moon;
-  ctx.fillRect(1300, 0, 400, 400);
+  if (phase === "night") {
+    const moon = ctx.createRadialGradient(1500, 190, 10, 1500, 190, 150);
+    moon.addColorStop(0, "rgba(255,248,230,1)");
+    moon.addColorStop(0.28, "rgba(240,240,255,0.95)");
+    moon.addColorStop(0.32, "rgba(200,210,255,0.25)");
+    moon.addColorStop(1, "rgba(160,180,255,0)");
+    ctx.fillStyle = moon;
+    ctx.fillRect(1300, 0, 400, 400);
+  } else {
+    // The sun: high by day, low and orange at dawn and dusk.
+    const low = phase !== "day";
+    const sx = phase === "dawn" ? 520 : phase === "dusk" ? 1520 : 1450;
+    const sy = low ? 820 : 210;
+    const sun = ctx.createRadialGradient(sx, sy, 10, sx, sy, low ? 260 : 220);
+    sun.addColorStop(0, low ? "rgba(255,230,170,1)" : "rgba(255,255,240,1)");
+    sun.addColorStop(0.18, low ? "rgba(255,200,120,0.95)" : "rgba(255,250,220,0.9)");
+    sun.addColorStop(0.24, low ? "rgba(255,160,90,0.35)" : "rgba(255,245,210,0.3)");
+    sun.addColorStop(1, "rgba(255,200,150,0)");
+    ctx.fillStyle = sun;
+    ctx.fillRect(sx - 300, sy - 300, 600, 600);
+  }
+  if (phase === "day" || phase === "dusk") {
+    // Soft clouds.
+    ctx.fillStyle = phase === "day" ? "rgba(255,255,255,0.75)" : "rgba(255,190,170,0.45)";
+    for (let i = 0; i < 9; i += 1) {
+      const cx = random() * 2048;
+      const cy = 120 + random() * 330;
+      for (let k = 0; k < 6; k += 1) {
+        ctx.beginPath();
+        ctx.ellipse(cx + k * 34 - 90, cy + Math.sin(k) * 10, 60 + random() * 40, 22 + random() * 12, 0, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+  }
+
   // Distant towers.
+  const lit = phase === "night" ? 0.22 : phase === "day" ? 0 : 0.12;
+  const tower = { night: "#1c1830", dawn: "#4e4870", day: "#8a9bb4", dusk: "#3e2f55" }[phase];
   let x = 0;
   while (x < 2048) {
-    const w = 40 + Math.random() * 90;
-    const h = 120 + Math.random() * 260;
-    ctx.fillStyle = "#1c1730";
+    const w = 40 + random() * 90;
+    const h = 120 + random() * 260;
+    ctx.fillStyle = tower;
     ctx.fillRect(x, 1024 - h, w, h);
     for (let wy = 1024 - h + 12; wy < 1010; wy += 16) {
       for (let wx = x + 6; wx < x + w - 6; wx += 12) {
-        if (Math.random() < 0.22) {
-          ctx.fillStyle = Math.random() < 0.8 ? "rgba(255,190,110,0.55)" : "rgba(180,220,255,0.5)";
+        const r = random();
+        if (r < lit) {
+          ctx.fillStyle = r < lit * 0.8 ? "rgba(255,190,110,0.55)" : "rgba(180,220,255,0.5)";
+          ctx.fillRect(wx, wy, 5, 7);
+        } else if (phase === "day" && r < 0.3) {
+          ctx.fillStyle = "rgba(220,235,250,0.35)";
           ctx.fillRect(wx, wy, 5, 7);
         }
       }
     }
-    x += w + Math.random() * 10;
+    x += w + random() * 10;
   }
   return canvas;
 }
 
 /* Nearer buildings, on a transparent background, so they slide past the sky as the camera moves. */
-export function skylineTexture() {
+export function skylineTexture(phase: Phase) {
   const { canvas, ctx } = makeCanvas(2048, 1024);
+  const random = seeded(19);
+  const body = { night: "#0f0d1c", dawn: "#2c2840", day: "#5b6a80", dusk: "#21182e" }[phase];
+  const side = { night: "#171427", dawn: "#3a3552", day: "#6e7d93", dusk: "#2c2140" }[phase];
+  const lit = phase === "night" ? 0.34 : phase === "day" ? 0 : 0.2;
   let x = -20;
   while (x < 2060) {
-    const w = 110 + Math.random() * 180;
-    const h = 260 + Math.random() * 520;
+    const w = 110 + random() * 180;
+    const h = 260 + random() * 520;
     const top = 1024 - h;
-    ctx.fillStyle = "#0f0d1c";
+    ctx.fillStyle = body;
     ctx.fillRect(x, top, w, h);
-    ctx.fillStyle = "#171427";
+    ctx.fillStyle = side;
     ctx.fillRect(x, top, w * 0.18, h);
-    if (Math.random() < 0.4) {
-      ctx.fillStyle = "#0f0d1c";
+    if (random() < 0.4) {
+      ctx.fillStyle = body;
       ctx.fillRect(x + w * 0.45, top - 50, 6, 50);
-      ctx.fillStyle = "#ff4d4d";
+      ctx.fillStyle = phase === "day" ? "#c94a4a" : "#ff4d4d";
       ctx.beginPath();
       ctx.arc(x + w * 0.45 + 3, top - 52, 5, 0, Math.PI * 2);
       ctx.fill();
     }
     for (let wy = top + 18; wy < 1010; wy += 26) {
       for (let wx = x + 14; wx < x + w - 14; wx += 22) {
-        const lit = Math.random();
-        if (lit < 0.34) {
-          ctx.fillStyle = lit < 0.28 ? "rgba(255,196,120,0.9)" : "rgba(200,240,255,0.85)";
+        const r = random();
+        if (r < lit) {
+          ctx.fillStyle = r < lit * 0.82 ? "rgba(255,196,120,0.9)" : "rgba(200,240,255,0.85)";
+          ctx.fillRect(wx, wy, 11, 14);
+        } else if (phase === "day" && r < 0.45) {
+          // By day the windows reflect the sky.
+          ctx.fillStyle = r < 0.2 ? "rgba(190,215,240,0.55)" : "rgba(120,150,185,0.6)";
           ctx.fillRect(wx, wy, 11, 14);
         }
       }
     }
-    x += w + 8 + Math.random() * 40;
+    x += w + 8 + random() * 40;
   }
   return canvas;
 }
@@ -269,32 +373,36 @@ export function trainTexture() {
   return canvas;
 }
 
-/* A neon sign: italic script in glowing lime tube, on a transparent background. */
+/* -------------------------------------------------------- signs & LEDs */
+
+/* The neon sign: bold letters with a white-hot core and a blue glow, so it stays readable. */
 export function neonTexture(text: string) {
-  const { canvas, ctx } = makeCanvas(1400, 300);
-  let size = 150;
-  ctx.font = `italic 400 ${size}px ${SERIF}`;
-  while (ctx.measureText(text).width > 1280 && size > 60) {
+  const { canvas, ctx } = makeCanvas(1600, 360);
+  let size = 170;
+  const font = (px: number) => `800 ${px}px ${SANS}`;
+  ctx.font = font(size);
+  while (ctx.measureText(text).width > 1380 && size > 60) {
     size -= 4;
-    ctx.font = `italic 400 ${size}px ${SERIF}`;
+    ctx.font = font(size);
   }
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  ctx.strokeStyle = "rgba(200,245,60,0.9)";
-  ctx.lineWidth = 7;
-  ctx.shadowColor = "rgba(200,245,60,1)";
-  ctx.shadowBlur = 34;
-  ctx.strokeText(text, 700, 160);
-  ctx.shadowBlur = 12;
-  ctx.lineWidth = 3;
-  ctx.strokeStyle = "rgba(240,255,200,1)";
-  ctx.strokeText(text, 700, 160);
+  // Outer glow, then the tube, then its bright core.
+  ctx.shadowColor = "rgba(77,155,255,0.95)";
+  ctx.shadowBlur = 46;
+  ctx.fillStyle = "rgba(77,155,255,0.9)";
+  ctx.fillText(text, 800, 186);
+  ctx.shadowBlur = 16;
+  ctx.fillStyle = "#9cc8ff";
+  ctx.fillText(text, 800, 186);
+  ctx.shadowBlur = 0;
+  ctx.lineWidth = 5;
+  ctx.strokeStyle = "#f2f8ff";
+  ctx.strokeText(text, 800, 186);
   return canvas;
 }
 
-/* -------------------------------------------------------------- ticker */
-
-/* The LED ticker above the window: lime letters made of dots, on black. */
+/* The LED ticker above the window: blue letters made of dots, on black. */
 export function tickerTexture(items: string[]) {
   const height = 96;
   const text = `${items.join("   ✦   ")}   ✦   `;
@@ -308,7 +416,7 @@ export function tickerTexture(items: string[]) {
   ctx.textBaseline = "middle";
   let x = 20;
   for (const part of text.split(/(▲|▼)/)) {
-    ctx.fillStyle = part === "▼" ? "#ff6b4a" : part === "▲" ? "#7dff6b" : LIME;
+    ctx.fillStyle = part === "▼" ? "#ff6b4a" : part === "▲" ? "#8fe3ff" : GLOW;
     ctx.fillText(part, x, height / 2 + 2);
     x += ctx.measureText(part).width;
   }
@@ -330,7 +438,65 @@ export function tickerTexture(items: string[]) {
   return { canvas, aspect: width / height };
 }
 
+/* A floating "z" for the sleeping dog. */
+export function zTexture() {
+  const { canvas, ctx } = makeCanvas(128, 128);
+  ctx.font = `800 96px ${SANS}`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.shadowColor = "rgba(167,123,255,0.9)";
+  ctx.shadowBlur = 14;
+  ctx.fillStyle = DREAM;
+  ctx.fillText("z", 64, 70);
+  return canvas;
+}
+
+/* A round badge of the Indian flag: saffron, white with the Ashoka Chakra, green. */
+export function flagBadgeTexture() {
+  const { canvas, ctx } = makeCanvas(256, 256);
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(128, 128, 124, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.fillStyle = "#ff9933";
+  ctx.fillRect(0, 0, 256, 86);
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 86, 256, 86);
+  ctx.fillStyle = "#138808";
+  ctx.fillRect(0, 172, 256, 84);
+  ctx.restore();
+  ctx.strokeStyle = "#000080";
+  ctx.fillStyle = "#000080";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(128, 129, 36, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(128, 129, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.lineWidth = 1.6;
+  for (let i = 0; i < 24; i += 1) {
+    const a = (i / 24) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(128, 129);
+    ctx.lineTo(128 + Math.cos(a) * 35, 129 + Math.sin(a) * 35);
+    ctx.stroke();
+  }
+  ctx.strokeStyle = "rgba(0,0,0,0.35)";
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.arc(128, 128, 124, 0, Math.PI * 2);
+  ctx.stroke();
+  return canvas;
+}
+
 /* ------------------------------------------------------------ ID cards */
+
+const isLight = (hex: string) => {
+  const n = Number.parseInt(hex.replace("#", ""), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  return 0.299 * r + 0.587 * g + 0.114 * b > 150;
+};
 
 export function idCardTexture(
   card: {
@@ -346,7 +512,7 @@ export function idCardTexture(
 ) {
   const { canvas, ctx } = makeCanvas(512, 768);
   roundRect(ctx, 0, 0, 512, 768, 36);
-  ctx.fillStyle = card.reserved ? "#1a2024" : "#f4f2ea";
+  ctx.fillStyle = card.reserved ? "#1a2028" : "#f4f2ea";
   ctx.fill();
   if (card.reserved) {
     ctx.setLineDash([18, 14]);
@@ -355,7 +521,7 @@ export function idCardTexture(
     roundRect(ctx, 26, 26, 460, 716, 26);
     ctx.stroke();
     ctx.setLineDash([]);
-    ctx.fillStyle = LIME;
+    ctx.fillStyle = GLOW;
     ctx.font = `700 34px ${MONO}`;
     ctx.textAlign = "center";
     ctx.fillText("● PENDING", 256, 120);
@@ -376,10 +542,10 @@ export function idCardTexture(
   ctx.fillStyle = "#f4f2ea";
   roundRect(ctx, 196, 30, 120, 22, 11);
   ctx.fill();
-  ctx.fillStyle = "#0a0c0d";
+  ctx.fillStyle = isLight(card.color) ? "#0a0c0d" : "#ffffff";
   condensed(ctx, card.org.toUpperCase(), 40, 150, 92, 432);
   // Photo square: the photo from content.js if there is one, otherwise the initials.
-  ctx.fillStyle = "#141a1e";
+  ctx.fillStyle = SLATE;
   roundRect(ctx, 40, 230, 170, 200, 16);
   ctx.fill();
   if (photo) {
@@ -392,7 +558,7 @@ export function idCardTexture(
     ctx.drawImage(photo, 40 + (170 - w) / 2, 230 + (200 - h) / 2, w, h);
     ctx.restore();
   } else {
-    ctx.fillStyle = LIME;
+    ctx.fillStyle = GLOW;
     condensed(ctx, card.initials, 125, 365, 110, 150, { align: "center" });
   }
   ctx.fillStyle = "#0a0c0d";
@@ -408,15 +574,16 @@ export function idCardTexture(
   })();
   roleLines.slice(0, 3).forEach((line, i) => condensed(ctx, line, 40, 520 + i * 62, 64, 432));
   ctx.font = `600 26px ${MONO}`;
-  ctx.fillStyle = "#3f6a00";
+  ctx.fillStyle = SCIENCE;
   ctx.fillText(card.dates.toUpperCase(), 40, 520 + Math.min(3, roleLines.length) * 62 + 6);
   // Barcode.
   ctx.fillStyle = "#0a0c0d";
+  const random = seeded(card.org.length + 3);
   let bx = 40;
   while (bx < 470) {
-    const bw = 2 + Math.floor(Math.random() * 7);
+    const bw = 2 + Math.floor(random() * 7);
     ctx.fillRect(bx, 690, bw, 46);
-    bx += bw + 2 + Math.floor(Math.random() * 6);
+    bx += bw + 2 + Math.floor(random() * 6);
   }
   return canvas;
 }
@@ -461,7 +628,7 @@ export function certificateTexture(title: string, issuer: string) {
   ctx.textAlign = "center";
   ctx.fillStyle = "#6b5730";
   ctx.font = `600 22px ${MONO}`;
-  ctx.fillText("CERTIFICATE OF COMPLETION", 384, 110);
+  ctx.fillText("CERTIFICATE", 384, 110);
   ctx.fillStyle = "#1a1a1a";
   ctx.font = `italic 400 54px ${SERIF}`;
   wrap(ctx, title, 620).forEach((line, i) => ctx.fillText(line, 384, 196 + i * 58));
@@ -489,7 +656,7 @@ export function certificateTexture(title: string, issuer: string) {
 
 export function emptyFrameTexture(label: string) {
   const { canvas, ctx } = makeCanvas(768, 560);
-  ctx.fillStyle = "#12171a";
+  ctx.fillStyle = "#12171c";
   ctx.fillRect(0, 0, 768, 560);
   ctx.setLineDash([16, 12]);
   ctx.strokeStyle = "rgba(236,234,226,0.35)";
@@ -497,7 +664,7 @@ export function emptyFrameTexture(label: string) {
   ctx.strokeRect(40, 40, 688, 480);
   ctx.setLineDash([]);
   ctx.textAlign = "center";
-  ctx.fillStyle = LIME;
+  ctx.fillStyle = GLOW;
   ctx.font = `600 24px ${MONO}`;
   ctx.fillText("● PENDING", 384, 230);
   ctx.fillStyle = "rgba(236,234,226,0.7)";
@@ -506,13 +673,13 @@ export function emptyFrameTexture(label: string) {
   return canvas;
 }
 
-/* A small engraved plate or disc label. */
-export function plateTexture(top: string, bottom: string, dark = true) {
+/* A small engraved plate. */
+export function plateTexture(top: string, bottom: string) {
   const { canvas, ctx } = makeCanvas(512, 256);
-  ctx.fillStyle = dark ? "#111416" : "#d8b45a";
+  ctx.fillStyle = "#111416";
   ctx.fillRect(0, 0, 512, 256);
   ctx.textAlign = "center";
-  ctx.fillStyle = dark ? "#e9cf7a" : "#3d2c0c";
+  ctx.fillStyle = "#e9cf7a";
   condensed(ctx, top, 256, 150, 140, 470, { align: "center" });
   ctx.font = `600 30px ${MONO}`;
   ctx.fillText(bottom.toUpperCase(), 256, 218);
@@ -561,7 +728,7 @@ export function clockFaceTexture() {
   ctx.textAlign = "center";
   ctx.font = `700 26px ${MONO}`;
   ctx.fillText("BENGALURU", 256, 180);
-  ctx.fillStyle = "#3f6a00";
+  ctx.fillStyle = SCIENCE;
   ctx.font = `600 22px ${MONO}`;
   ctx.fillText("IST", 256, 352);
   return canvas;
@@ -570,8 +737,8 @@ export function clockFaceTexture() {
 export function phoneScreenTexture(name: string, email: string) {
   const { canvas, ctx } = makeCanvas(360, 720);
   const g = ctx.createLinearGradient(0, 0, 0, 720);
-  g.addColorStop(0, "#1b2a10");
-  g.addColorStop(1, "#0a0c0d");
+  g.addColorStop(0, "#0d2246");
+  g.addColorStop(1, "#070a12");
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, 360, 720);
   ctx.textAlign = "center";
@@ -584,11 +751,11 @@ export function phoneScreenTexture(name: string, email: string) {
   ctx.fillStyle = "rgba(236,234,226,0.8)";
   wrap(ctx, name.toUpperCase(), 300).forEach((line, i) => ctx.fillText(line, 180, 300 + i * 26));
   ctx.fillText(email.length > 26 ? `${email.slice(0, 24)}…` : email, 180, 372);
-  ctx.fillStyle = LIME;
+  ctx.fillStyle = SCIENCE;
   ctx.beginPath();
   ctx.arc(180, 590, 54, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = "#0a0c0d";
+  ctx.fillStyle = "#ffffff";
   ctx.font = `700 52px ${SANS}`;
   ctx.fillText("✆", 180, 608);
   return canvas;
@@ -596,16 +763,16 @@ export function phoneScreenTexture(name: string, email: string) {
 
 export function businessCardTexture(name: string, line: string, email: string) {
   const { canvas, ctx } = makeCanvas(512, 300);
-  ctx.fillStyle = "#0e1214";
+  ctx.fillStyle = "#0e1218";
   ctx.fillRect(0, 0, 512, 300);
-  ctx.fillStyle = LIME;
+  ctx.fillStyle = SCIENCE;
   ctx.fillRect(0, 0, 14, 300);
   ctx.fillStyle = INK;
   const [first = "", ...rest] = name.split(/\s+/);
   condensed(ctx, first.toUpperCase(), 44, 100, 72, 420);
   condensed(ctx, rest.join(" ").toUpperCase(), 44, 160, 52, 420);
   ctx.font = `italic 400 30px ${SERIF}`;
-  ctx.fillStyle = LIME;
+  ctx.fillStyle = GLOW;
   ctx.fillText(line, 44, 210);
   ctx.font = `500 18px ${MONO}`;
   ctx.fillStyle = "rgba(236,234,226,0.75)";
@@ -619,7 +786,7 @@ export function keyboardTexture() {
   ctx.fillRect(0, 0, 512, 160);
   for (let r = 0; r < 5; r += 1) {
     for (let c = 0; c < 15; c += 1) {
-      ctx.fillStyle = (r === 0 && c === 0) || (r === 4 && c > 4 && c < 10) ? "#c8f53c" : "#2c3338";
+      ctx.fillStyle = (r === 0 && c === 0) || (r === 4 && c > 4 && c < 10) ? GLOW : "#2c3338";
       if (r === 4 && c > 4 && c < 10 && c !== 5) continue;
       const w = r === 4 && c === 5 ? 160 : 28;
       ctx.fillRect(10 + c * 33, 10 + r * 29, w, 24);
@@ -649,6 +816,22 @@ export function notebookTexture() {
   ctx.font = `italic 400 30px ${SERIF}`;
   ctx.fillStyle = "#1a1a1a";
   ctx.fillText("Q → M → R", 30, 90);
+  return canvas;
+}
+
+/* The speaker's grille: fine dots. */
+export function grilleTexture() {
+  const { canvas, ctx } = makeCanvas(256, 256);
+  ctx.fillStyle = "#14181d";
+  ctx.fillRect(0, 0, 256, 256);
+  ctx.fillStyle = "#06080a";
+  for (let x = 6; x < 256; x += 10) {
+    for (let y = 6; y < 256; y += 10) {
+      ctx.beginPath();
+      ctx.arc(x + ((y / 10) % 2) * 5, y, 2.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
   return canvas;
 }
 
@@ -702,9 +885,9 @@ export class ChartScreen {
 
   private draw() {
     const { ctx } = this;
-    ctx.fillStyle = "#06090b";
+    ctx.fillStyle = "#05080d";
     ctx.fillRect(0, 0, 640, 400);
-    ctx.strokeStyle = "rgba(200,245,60,0.08)";
+    ctx.strokeStyle = "rgba(77,155,255,0.1)";
     ctx.lineWidth = 1;
     for (let y = 60; y < 380; y += 40) {
       ctx.beginPath();
@@ -720,7 +903,7 @@ export class ChartScreen {
     this.candles.forEach((c, i) => {
       const x = 20 + i * 15;
       const up = c.c >= c.o;
-      ctx.strokeStyle = ctx.fillStyle = up ? LIME : "#ff6b4a";
+      ctx.strokeStyle = ctx.fillStyle = up ? GLOW : "#ff6b4a";
       ctx.beginPath();
       ctx.moveTo(x + 5, y(c.h));
       ctx.lineTo(x + 5, y(c.l));
@@ -732,7 +915,7 @@ export class ChartScreen {
     ctx.fillText(this.symbol, 20, 40);
     const lastCandle = this.candles[this.candles.length - 1];
     const up = lastCandle.c >= lastCandle.o;
-    ctx.fillStyle = up ? LIME : "#ff6b4a";
+    ctx.fillStyle = up ? GLOW : "#ff6b4a";
     ctx.textAlign = "right";
     ctx.fillText(`${up ? "▲" : "▼"} ${this.price.toFixed(2)}`, 620, 40);
     ctx.textAlign = "left";
@@ -765,19 +948,19 @@ export class TerminalScreen {
 
   private draw() {
     const { ctx } = this;
-    ctx.fillStyle = "#07090a";
+    ctx.fillStyle = "#05070b";
     ctx.fillRect(0, 0, 640, 400);
     ctx.font = `500 21px ${MONO}`;
     let y = 44;
     this.lines.forEach((line) => {
-      ctx.fillStyle = line.startsWith(">") ? LIME : "rgba(236,234,226,0.86)";
+      ctx.fillStyle = line.startsWith(">") ? GLOW : "rgba(236,234,226,0.86)";
       wrap(ctx, line, 590).forEach((part) => {
         ctx.fillText(part, 24, y);
         y += 30;
       });
     });
     if (this.on) {
-      ctx.fillStyle = LIME;
+      ctx.fillStyle = GLOW;
       ctx.fillRect(24, y - 20, 13, 24);
     }
   }

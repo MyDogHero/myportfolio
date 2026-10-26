@@ -14,6 +14,8 @@ export type Profile = {
   role: string;
   tagline: string;
   focusLine: string;
+  nameLine: string;
+  sign: string;
   statement: string;
   photo: string;
   photoAlt: string;
@@ -122,6 +124,32 @@ export type Contact = {
   cvFile: string;
 };
 
+export type EasterItem = {
+  tag?: string;
+  title: string;
+  text?: string;
+  record?: string;
+  issuer?: string;
+  date?: string;
+  link?: Link;
+  theme?: string;
+};
+
+export type EasterEgg = {
+  kicker: string;
+  headline: string;
+  intro: string;
+  items: EasterItem[];
+};
+
+export type Song = {
+  title: string;
+  artist?: string;
+  film?: string;
+  youtube?: string;
+  file?: string;
+};
+
 export type Headings = {
   highlights: string;
   focus: string;
@@ -151,6 +179,8 @@ type Content = {
   achievements: Achievement[];
   certifications: Certification[];
   contact: Contact;
+  easterEgg: EasterEgg;
+  music: { title: string; songs: Song[] };
   headings: Headings;
 };
 
@@ -211,6 +241,8 @@ export const profile: Profile = {
   role: text(profileRaw.role),
   tagline: text(profileRaw.tagline),
   focusLine: text(profileRaw.focusLine),
+  nameLine: text(profileRaw.nameLine, text(profileRaw.role)),
+  sign: text(profileRaw.sign, "My Portfolio"),
   statement: text(profileRaw.statement),
   photo: text(profileRaw.photo),
   photoAlt: text(profileRaw.photoAlt, `Portrait of ${text(profileRaw.name)}`),
@@ -320,3 +352,21 @@ export const headings: Headings = Object.fromEntries(
     text(headingsRaw[key as keyof Headings], fallback),
   ]),
 ) as Headings;
+
+const easterRaw = (pick("easterEgg") ?? {}) as Partial<EasterEgg>;
+export const easterEgg: EasterEgg = {
+  kicker: text(easterRaw.kicker, "You found it"),
+  headline: text(easterRaw.headline, "Off the clock."),
+  intro: text(easterRaw.intro),
+  items: list<EasterItem>(easterRaw.items)
+    .filter((item) => item && text(item.title))
+    .map((item) => ({ ...item, link: link(item.link) })),
+};
+
+const musicRaw = (pick("music") ?? {}) as Partial<{ title: string; songs: Song[] }>;
+export const music = {
+  title: text(musicRaw.title, "Radio"),
+  songs: list<Song>(musicRaw.songs).filter(
+    (song) => song && text(song.title) && (text(song.youtube) || text(song.file)),
+  ),
+};

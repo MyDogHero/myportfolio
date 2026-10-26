@@ -15,12 +15,21 @@ https://kaustubhiyer.netlify.app. See README.md for the file layout.
 
 ## How the site works
 
-- Home is an interactive 3D room (three.js, `src/scene/`): a late-night
-  analyst's office in Bengaluru. Objects are sections: monitors → About,
-  bookshelf → Education, pegboard ID cards → Experience, trophy shelf →
-  Achievements, desk phone → Contact. Each has a floating lime ▲ marker, an
-  HTML label button (for keyboard and touch), a hover effect and a camera view
-  (`hotspots` in `src/scene/room.ts`).
+- Home is an interactive 3D room (three.js, `src/scene/`): an analyst's
+  office in Bengaluru with the owner typing at the desk (`buildPerson` in
+  `src/scene/props.ts`: dark brown skin, mustache, black rounded-rectangle
+  glasses, side-parted hair) and a cream Indie dog on the couch. Objects are
+  sections: monitors/person → About, bookshelf → Education, pegboard ID cards
+  → Experience, trophy shelf → Achievements, desk phone → Contact. Each has a
+  floating blue ▲ marker, an HTML label button (for keyboard and touch), a
+  hover effect and a camera view (`hotspots` in `src/scene/room.ts`).
+- Two hotspots have no marker: the football opens the hidden `easter` route
+  (`/off-the-clock/`, kept out of the menu, sitemap and text version on
+  purpose), and the speaker (`radio`) opens the Now Playing card, but only when
+  `music.songs` in content.js is not empty.
+- The room follows the real time in Bengaluru (`src/scene/daylight.ts`;
+  `?hour=13` previews another time): sky and skyline textures, sun/moon light,
+  exposure and glow threshold change by phase, and the dog is awake 6:30–19:00.
 - Each section has its own address (`/about/`, `/education/`, …; list in
   `src/router.ts`, mirrored in `scripts/build.mjs`). Opening it flies the
   camera and slides in the panel (`src/components/Panel.tsx`). The single-file
@@ -28,9 +37,16 @@ https://kaustubhiyer.netlify.app. See README.md for the file layout.
 - The room is built from primitives and canvas textures in code; there are no
   model files. Everything written on objects comes from `content.js`.
 - three.js loads as a separate chunk after the page appears
-  (`src/components/World.tsx`). If WebGL is missing, or the visitor picks
-  "Text version", `src/components/TextMode.tsx` shows every section on one
-  page. Printing always uses the text version.
+  (`src/components/World.tsx`). The loading screen is plain HTML/CSS inside
+  `index.html` so it shows at once; `src/boot.ts` moves its counter on and
+  lifts it when the room (or the text version) is ready. If WebGL is missing,
+  or the visitor picks "Text version", `src/components/TextMode.tsx` shows
+  every section on one page. Printing always uses the text version.
+- `src/sound.ts` makes the UI sounds with WebAudio (no files); the HUD has a
+  mute button remembered in localStorage. `src/components/NowPlaying.tsx`
+  plays YouTube links in YouTube's own player (keep it visible and at least
+  200×200 while playing; on phones it shrinks to one line and pauses YouTube
+  while a panel is open) or audio files from `public/music/`.
 
 ## Content
 
@@ -44,25 +60,38 @@ https://kaustubhiyer.netlify.app. See README.md for the file layout.
   content field needs a type and a fallback in `src/content.ts`.
 - Entries with `open: true` are deliberate "Reserved for…" lines (and blank
   "Reserved" ID cards), shown on purpose. Case competitions and quizzes are
-  achievements, not experience.
+  achievements, not experience. McKinsey Forward is a certification.
+- Music: classic Bollywood songs are still under copyright in India, so only
+  add YouTube links to official uploads, or audio files the owner has a
+  licence for. Don't add song files on request without that.
 - `public/Kaustubh-Santosh-Iyer-CV.pdf` is a starter CV generated from the site
-  text; the owner is expected to replace it with their own.
+  text; the owner is expected to replace it with their own. It must not repeat
+  a result (MHT-CET 96.14 is under Education only).
+- `public/og-image.png` is a 1200×630 render of the room at night with the
+  name over it; re-render it if the room changes a lot.
 
 ## Design rules
 
-- Palette: near-black built on the owner's slate `#141a1e`, off-white ink, one
-  acid-lime accent `#c8f53c` (`#3f6a00` for lime text on light backgrounds).
-  Fonts (Google Fonts): Archivo (condensed 900 capitals for headlines),
-  Instrument Serif italic for accent words, JetBrains Mono for labels.
-- The room is always night-dark, so the HUD over it always uses light text. The
-  panel and text version follow the visitor's light/dark setting.
+- Palette: near-black built on the owner's slate `#141a1e`, off-white ink, and
+  blue: Science Blue `#0066cc` for fills (white text on it), `#4d9bff` for
+  glows, lines and dots, `#6aaeff` for blue text on dark and `#0059b3` on
+  light; YInMn Blue `#2e5090` as a second blue. Fonts (Google Fonts): Archivo
+  (condensed 900 capitals for headlines), Instrument Serif italic for accent
+  words, JetBrains Mono for labels. The easter-egg cards keep their own
+  colours (Arsenal red, a dark blue certificate with a gold seal).
+- The room's walls stay dark even by day, so the HUD over it always uses light
+  text on dark glass. The panel and text version follow the visitor's
+  light/dark setting.
+- The neon sign must stay readable: draw it crisp and keep its material
+  colour below the bloom threshold (no additive blending).
 - Per-frame DOM animation may only set `transform` and `opacity` (the
   scramble effect and the clock are the exceptions). In the 3D scene, keep the
   frame cheap: canvas textures redraw at most a few times a second, and the
   loop stops when the tab is hidden or the text version is showing.
 - Respect `prefers-reduced-motion` (camera cuts instead of flights, no bobbing,
-  train, ticker scroll or swinging cards), keep keyboard focus visible, and
-  keep every section reachable without 3D (menu, label buttons, text version).
+  train, ticker scroll, swaying cards, typing or dog animation), keep keyboard
+  focus visible, and keep every section reachable without 3D (menu, label
+  buttons, text version). The ID cards must sway together and never overlap.
 
 ## Build
 

@@ -12,9 +12,11 @@ import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer
 import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
+import { bengaluruHour, dogAwakeAt, phaseAt } from "./daylight";
 import { type HotspotId, type Room, type View, buildRoom } from "./room";
+import type { Phase } from "./textures";
 
-export type Focus = "home" | HotspotId;
+export type Focus = "home" | Exclude<HotspotId, "radio">;
 
 export type WorldOptions = {
   canvas: HTMLCanvasElement;
@@ -27,6 +29,29 @@ export type WorldOptions = {
 export type PanelSide = "none" | "right" | "bottom";
 
 const tmp = new THREE.Vector3();
+
+/*
+ * Light for each time of day. "sky" lights the room from above, "sun" is the
+ * moon or sun shining in through the window (it casts the window's shape).
+ */
+const LIGHTING: Record<
+  Phase,
+  {
+    sky: [string, string, number];
+    sun: [string, number];
+    from: [number, number, number];
+    environment: number;
+    exposure: number;
+    background: string;
+    /* Only things brighter than this glow; by day it is raised so sunlit surfaces don't. */
+    bloom: number;
+  }
+> = {
+  night: { sky: ["#55639e", "#1a120c", 0.55], sun: ["#a8bcff", 1.5], from: [-3.2, 5.5, -9], environment: 0.22, exposure: 1.05, background: "#07090b", bloom: 0.92 },
+  dawn: { sky: ["#8c88b8", "#2a1c14", 0.85], sun: ["#ffb98f", 2.2], from: [-6, 3, -9], environment: 0.32, exposure: 1.08, background: "#0a0b12", bloom: 0.95 },
+  day: { sky: ["#b8d0ff", "#3d3024", 1.25], sun: ["#fff1d6", 2.7], from: [-2.6, 7.5, -9], environment: 0.5, exposure: 1.0, background: "#0c1118", bloom: 1.05 },
+  dusk: { sky: ["#9a84b0", "#2a1a14", 0.85], sun: ["#ffad6b", 2.6], from: [-6.5, 3.2, -8], environment: 0.32, exposure: 1.08, background: "#0c0a12", bloom: 0.95 },
+};
 
 export class World {
   private renderer: THREE.WebGLRenderer;
@@ -56,6 +81,9 @@ export class World {
   private height = 1;
   private hits: THREE.Object3D[] = [];
   private disposers: (() => void)[] = [];
+  private hemisphere = new THREE.HemisphereLight();
+  private sun = new THREE.DirectionalLight();
+  private daylightTimer = 0;
 
   constructor(private options: WorldOptions) {
     const { canvas } = options;
@@ -77,7 +105,7 @@ export class World {
 
     this.room = buildRoom({ still: options.still });
     this.scene.add(this.room.group);
-    this.room.hotspots.forEach((spot) => this.scene.add(spot.marker));
+    this.room.hotspots.forEach((spot) => spot.marker && this.scene.add(spot.marker));
     this.hits = this.room.hotspots.flatMap((spot) => spot.hits);
     this.addLights();
 
@@ -87,6 +115,9 @@ export class World {
     this.bloom = new UnrealBloomPass(new THREE.Vector2(256, 256), 0.48, 0.5, 0.92);
     this.composer.addPass(this.bloom);
     this.composer.addPass(new OutputPass());
+    this.updateDaylight();
+    // Check the time once a minute, so the sky changes while the page is open.
+    this.daylightTimer = window.setInterval(() => this.updateDaylight(), 60_000);
 
     this.resize();
     const overview = this.overview();
@@ -102,10 +133,9 @@ export class World {
   }
 
   private addLights() {
-    this.scene.add(new THREE.HemisphereLight("#55639e", "#1a120c", 0.55));
-    // Moonlight and city glow through the window; it casts the window's shape onto the floor.
-    const moon = new THREE.DirectionalLight("#a8bcff", 1.5);
-    moon.position.set(-3.2, 5.5, -9);
+    this.scene.add(this.hemisphere);
+    // Moonlight (or sunlight) through the window; it casts the window's shape onto the floor.
+    const moon = this.sun;
     moon.target.position.set(0.2, 0, -0.4);
     moon.castShadow = true;
     const size = this.isNarrow() ? 1024 : 2048;
@@ -125,10 +155,29 @@ export class World {
     this.scene.add(fill);
   }
 
+  /* Matches the sky, the light and the dog to the time of day in Bengaluru. */
+  private updateDaylight() {
+    const hour = bengaluruHour();
+    const phase = phaseAt(hour);
+    const light = LIGHTING[phase];
+    this.hemisphere.color.set(light.sky[0]);
+    this.hemisphere.groundColor.set(light.sky[1]);
+    this.hemisphere.intensity = light.sky[2];
+    this.sun.color.set(light.sun[0]);
+    this.sun.intensity = light.sun[1];
+    this.sun.position.set(...light.from);
+    this.scene.environmentIntensity = light.environment;
+    this.renderer.toneMappingExposure = light.exposure;
+    this.bloom.threshold = light.bloom;
+    (this.scene.background as THREE.Color).set(light.background);
+    this.scene.fog?.color.set(light.background);
+    this.room.setDaylight(phase, dogAwakeAt(hour));
+  }
+
   /* The whole-room view; a phone held upright stands further back. */
   private overview(): View & { fov: number } {
     if (this.isNarrow()) {
-      return { position: new THREE.Vector3(4.9, 4.3, 7.4), target: new THREE.Vector3(-0.15, 0.72, -1.1), fov: 54 };
+      return { position: new THREE.Vector3(5.3, 4.3, 7.2), target: new THREE.Vector3(0.1, 0.72, -1.1), fov: 54 };
     }
     return { position: new THREE.Vector3(4.5, 3.05, 5.0), target: new THREE.Vector3(-0.45, 1.3, -1.05), fov: 40 };
   }
@@ -137,7 +186,7 @@ export class World {
     const overview = this.overview();
     if (focus === "home") return overview;
     const spot = this.room.hotspots.find((item) => item.id === focus);
-    if (!spot) return overview;
+    if (!spot?.view) return overview;
     const position = spot.view.position.clone();
     // Upright phones show the object in the top part of the screen, so step back a little.
     if (this.isNarrow()) position.sub(spot.view.target).multiplyScalar(1.55).add(spot.view.target);
@@ -149,6 +198,11 @@ export class World {
   setLabel(id: HotspotId, element: HTMLElement | null) {
     if (element) this.labels.set(id, element);
     else this.labels.delete(id);
+  }
+
+  /* Tells the speaker whether music is playing, so its cone can pulse. */
+  setPlaying(on: boolean) {
+    this.room.setPlaying(on);
   }
 
   /* Flies the camera to an object (or back to the whole room) and makes room for the panel. */
@@ -205,6 +259,7 @@ export class World {
 
   dispose() {
     this.stop();
+    window.clearInterval(this.daylightTimer);
     this.flight?.kill();
     this.disposers.forEach((fn) => fn());
     this.scene.traverse((object) => {
@@ -350,20 +405,22 @@ export class World {
     }
 
     // Markers bob and spin; labels follow them on screen.
+    const showMarkers = this.focus === "home";
     this.room.hotspots.forEach((spot, index) => {
       const marker = spot.marker;
-      const arrow = marker.userData.arrow as THREE.Mesh;
-      const showMarkers = this.focus === "home";
-      const goal = showMarkers ? (this.hovered === spot.id ? 1.3 : 1) : 0.001;
-      const scale = THREE.MathUtils.lerp(marker.scale.x, goal, still ? 1 : 0.12);
-      marker.scale.setScalar(scale);
-      if (!still) {
-        arrow.rotation.y += delta * 1.6;
-        arrow.position.y = Math.sin(time / 600 + index) * 0.035;
+      if (marker) {
+        const arrow = marker.userData.arrow as THREE.Mesh;
+        const goal = showMarkers ? (this.hovered === spot.id ? 1.3 : 1) : 0.001;
+        const scale = THREE.MathUtils.lerp(marker.scale.x, goal, still ? 1 : 0.12);
+        marker.scale.setScalar(scale);
+        if (!still) {
+          arrow.rotation.y += delta * 1.6;
+          arrow.position.y = Math.sin(time / 600 + index) * 0.035;
+        }
       }
       const label = this.labels.get(spot.id);
       if (label) {
-        tmp.copy(marker.position).project(this.camera);
+        tmp.copy(spot.anchor).project(this.camera);
         const x = (tmp.x * 0.5 + 0.5) * this.width;
         const y = (-tmp.y * 0.5 + 0.5) * this.height;
         const visible = showMarkers && tmp.z < 1;

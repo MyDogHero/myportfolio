@@ -45,6 +45,8 @@ const routes = [
   { slug: "experience", label: "Experience" },
   { slug: "achievements", label: "Achievements & Certifications" },
   { slug: "contact", label: "Contact" },
+  // The easter egg has its own address but stays out of the sitemap.
+  { slug: "off-the-clock", label: "Off the clock", hidden: true },
 ];
 
 // Read content.js now, to catch a mistake before publishing and to name the pages.
@@ -187,7 +189,10 @@ writeFileSync(
   path.join(siteDir, "sitemap.xml"),
   `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${routes.map(({ slug }) => `  <url><loc>${siteUrl}/${slug ? `${slug}/` : ""}</loc></url>`).join("\n")}
+${routes
+  .filter((route) => !route.hidden)
+  .map(({ slug }) => `  <url><loc>${siteUrl}/${slug ? `${slug}/` : ""}</loc></url>`)
+  .join("\n")}
 </urlset>
 `,
 );

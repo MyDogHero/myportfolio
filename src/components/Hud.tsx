@@ -1,15 +1,16 @@
 import { contact, profile } from "@/content";
-import { assetUrl, routes, useRouter } from "@/router";
+import { assetUrl, menuRoutes, useRouter } from "@/router";
+import { setSound, useSoundEnabled } from "@/sound";
 import { Clock } from "./effects";
-import { Download } from "./icons";
+import { Download, SoundOff, SoundOn } from "./icons";
 import { PageLink, ScrambleText } from "./ui";
 
 const pad = (n: number) => String(n).padStart(2, "0");
 
-/* Everything drawn over the room: logo, clock, text-version switch, name, the menu pill and the CV link. */
+/* Everything drawn over the room: logo, clock, sound and text-version switches, name, the menu pill and the CV link. */
 export function Hud({ textMode, onToggleText }: { textMode: boolean; onToggleText: () => void }) {
   const { current } = useRouter();
-  const city = contact.location.split(",")[0];
+  const sound = useSoundEnabled();
   return (
     <>
       <header className="hud-top">
@@ -22,6 +23,16 @@ export function Hud({ textMode, onToggleText }: { textMode: boolean; onToggleTex
           <span className="hud-clock">
             <Clock />
           </span>
+          <button
+            type="button"
+            className="hud-button hud-sound"
+            onClick={() => setSound(!sound)}
+            aria-pressed={sound}
+            aria-label="Sound effects"
+            title={sound ? "Sound on" : "Sound off"}
+          >
+            {sound ? <SoundOn /> : <SoundOff />}
+          </button>
           <button type="button" className="hud-button" onClick={onToggleText} aria-pressed={textMode}>
             {textMode ? "3D room" : "Text version"}
           </button>
@@ -32,8 +43,7 @@ export function Hud({ textMode, onToggleText }: { textMode: boolean; onToggleTex
         <p className="hud-name">{profile.name}</p>
         <p className="hud-role">
           <span className="live-dot" aria-hidden="true" />
-          {profile.focusLine}
-          {city ? ` · ${city}` : ""}
+          {profile.nameLine}
         </p>
       </div>
 
@@ -45,9 +55,7 @@ export function Hud({ textMode, onToggleText }: { textMode: boolean; onToggleTex
 
       <nav className="hud-nav" id="sections-nav" aria-label="Sections">
         <ul>
-          {routes
-            .filter((item) => item.id !== "home")
-            .map((item, index) => (
+          {menuRoutes.map((item, index) => (
               <li key={item.id}>
                 <PageLink to={item.id} className="hud-link">
                   <span className="hud-num" aria-hidden="true">

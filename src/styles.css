@@ -1,15 +1,18 @@
 /*
  * Kaustubh Santosh Iyer – portfolio styles.
  *
- * The home page is a 3D room at night (drawn by src/scene/). These styles
- * cover what sits on top of it (the HUD: logo, menu pill, labels), the panel
- * that slides in for each section, and the plain text version.
+ * The home page is a 3D room (drawn by src/scene/) whose light follows the
+ * time of day in Bengaluru. These styles cover what sits on top of it (the
+ * HUD: logo, menu pill, labels, the Now Playing card), the panel that slides
+ * in for each section, and the plain text version. The loading screen is
+ * styled inside index.html, so it shows before this file arrives.
  *
- * The room is always dark, so the HUD always uses light text. The panel and
- * the text version follow the visitor's light or dark setting.
+ * The room's walls stay dark even by day, so the HUD always uses light text
+ * on dark glass. The panel and the text version follow the visitor's light
+ * or dark setting.
  *
- * Contents: colours · base · type · room · HUD · hotspots · loader · panel ·
- * sections · text version · motion · print
+ * Contents: colours · base · type · room · HUD · hotspots · now playing ·
+ * panel · sections · easter egg · text version · motion · print
  */
 
 /* --------------------------------------------------------------- colours */
@@ -26,11 +29,16 @@
   --ink-3: #7f878f;
   --line: rgba(236, 234, 226, 0.12);
   --line-2: rgba(236, 234, 226, 0.26);
-  --accent: #c8f53c;
-  --accent-text: #c8f53c;
-  --on-accent: #0a0c0d;
+  /* Science Blue for fills (with white text on them), a lighter blue for
+     thin lines and dots, and a blue that is readable as text. */
+  --accent: #0066cc;
+  --accent-hi: #4d9bff;
+  --accent-text: #6aaeff;
+  --on-accent: #ffffff;
+  --yinmn: #2e5090;
 
   /* The HUD over the room never changes colour. */
+  --hud-accent: #6aaeff;
   --hud-ink: #eceae2;
   --hud-ink-2: rgba(236, 234, 226, 0.68);
   --hud-glass: rgba(16, 20, 23, 0.7);
@@ -59,7 +67,8 @@
     --ink-3: #61686d;
     --line: rgba(13, 16, 18, 0.13);
     --line-2: rgba(13, 16, 18, 0.28);
-    --accent-text: #3f6a00;
+    --accent-hi: #0066cc;
+    --accent-text: #0059b3;
   }
 }
 
@@ -157,7 +166,7 @@ button {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--accent-hi);
   outline-offset: 3px;
   border-radius: 4px;
 }
@@ -230,7 +239,6 @@ button {
 .featured-title,
 .contact-email-link,
 .tm-name,
-.loader-count,
 .avatar span {
   font-family: var(--display);
   font-stretch: 62%;
@@ -262,8 +270,9 @@ button {
 .hud-cv,
 .panel-close,
 .hotspot-pill,
-.loader-top,
-.loader-line {
+.np-kicker,
+.np-meta,
+.np-count {
   font-family: var(--mono);
   font-size: 11.5px;
   font-weight: 500;
@@ -296,7 +305,7 @@ button {
   padding-bottom: 5px;
   color: var(--ink);
   font-weight: 600;
-  background: linear-gradient(var(--accent), var(--accent)) 0 100% / 100% 1.5px no-repeat;
+  background: linear-gradient(var(--accent-hi), var(--accent-hi)) 0 100% / 100% 1.5px no-repeat;
 }
 
 .link-arrow .icon {
@@ -323,7 +332,7 @@ button {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--accent-hi);
 }
 
 .live-dot::after {
@@ -331,7 +340,7 @@ button {
   position: absolute;
   inset: 0;
   border-radius: 50%;
-  background: var(--accent);
+  background: var(--accent-hi);
   animation: ping 1.8s var(--ease) infinite;
 }
 
@@ -438,7 +447,18 @@ button {
 
 .hud-button:hover,
 .panel-close:hover {
-  border-color: var(--accent);
+  border-color: var(--accent-hi);
+}
+
+.hud-sound {
+  justify-content: center;
+  width: 40px;
+  padding: 0;
+}
+
+.hud-sound .icon {
+  width: 17px;
+  height: 17px;
 }
 
 .hud-id {
@@ -482,7 +502,7 @@ button {
 }
 
 .hud-tick {
-  color: var(--accent);
+  color: var(--hud-accent);
 }
 
 .hud-nav {
@@ -539,11 +559,11 @@ button {
 
 .hud-link[aria-current="page"] {
   background: var(--accent);
-  color: #0a0c0d;
+  color: var(--on-accent);
 }
 
 .hud-link[aria-current="page"] .hud-num {
-  color: #0a0c0d;
+  color: rgba(255, 255, 255, 0.78);
 }
 
 .hud-cv {
@@ -554,7 +574,7 @@ button {
   height: 46px;
   border-color: transparent;
   background: var(--accent);
-  color: #0a0c0d;
+  color: var(--on-accent);
   font-weight: 700;
 }
 
@@ -565,6 +585,7 @@ button {
 
 .hud-cv:hover {
   background: #eceae2;
+  color: #0a0c0d;
 }
 
 /* With the panel open on the right, the menu centres in the space that's left. */
@@ -696,7 +717,7 @@ html[data-panel="bottom"] .hud-cv {
 }
 
 .hotspot-num {
-  color: var(--accent);
+  color: var(--hud-accent);
 }
 
 .hotspot-object {
@@ -724,65 +745,263 @@ html[data-panel="bottom"] .hud-cv {
   }
 }
 
-/* ---------------------------------------------------------------- loader */
-
-.loader {
-  position: absolute;
-  inset: 0;
-  z-index: 60;
-  display: flex;
-  padding: 18px var(--gutter) max(24px, env(safe-area-inset-bottom));
-  background: #0a0c0d;
-  color: #eceae2;
-  transition:
-    transform 1.1s var(--ease) 0.1s,
-    visibility 0s linear 1.3s;
+/* The football's label stays hidden until it is pointed at or reached with the keyboard. */
+.hotspot[data-kind="secret"] {
+  width: 40px;
+  height: 40px;
+  margin: -20px 0 0 -20px;
 }
 
-.loader[data-done="true"] {
-  transform: translateY(-100%);
-  visibility: hidden;
+.hotspot[data-kind="secret"] .hotspot-num {
+  color: #ff6b6f;
 }
 
-.loader-inner {
+.hotspot[data-kind="radio"] .hotspot-num {
+  color: #c4a8ff;
+}
+
+@media (hover: none) {
+  .hotspot[data-kind="secret"] .hotspot-pill {
+    opacity: 0;
+  }
+
+  .hotspot[data-kind="secret"]:focus-visible .hotspot-pill {
+    opacity: 1;
+  }
+}
+
+/* ----------------------------------------------------------- now playing */
+
+.np {
+  position: fixed;
+  top: 70px;
+  right: var(--gutter);
+  z-index: 46;
+  width: min(272px, calc(100vw - var(--gutter) * 2));
+  padding: 12px;
+  border: 1px solid var(--hud-line);
+  border-radius: 20px;
+  background: rgba(8, 14, 26, 0.84);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  backdrop-filter: blur(16px) saturate(140%);
+  box-shadow:
+    0 24px 60px -24px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  color: var(--hud-ink);
+  animation: np-in 0.5s var(--ease);
+}
+
+/* With a panel open on the right, the card moves to the left. */
+html[data-panel="right"] .np {
+  right: auto;
+  left: var(--gutter);
+}
+
+@keyframes np-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+.np-head {
   display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.np-kicker {
   flex: 1;
-  flex-direction: column;
-}
-
-.loader-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  color: rgba(236, 234, 226, 0.68);
-}
-
-.loader-line {
-  margin-top: auto;
-  color: #c8f53c;
-}
-
-.loader-count {
-  font-size: clamp(6rem, 24vw, 22rem);
-  line-height: 0.8;
-  font-variant-numeric: tabular-nums;
-}
-
-.loader-bar {
-  position: relative;
-  display: block;
-  height: 2px;
-  margin-top: 18px;
+  min-width: 0;
   overflow: hidden;
-  background: rgba(236, 234, 226, 0.14);
+  color: var(--hud-accent);
+  font-size: 10.5px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.loader-bar span {
-  position: absolute;
-  inset: 0;
-  background: #c8f53c;
-  transform-origin: 0 50%;
-  transition: transform 0.6s var(--ease);
+/* Three little equaliser bars that dance while music plays. */
+.np-live {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 12px;
+}
+
+.np-live span {
+  width: 3px;
+  height: 12px;
+  border-radius: 2px;
+  background: var(--hud-accent);
+  transform: scaleY(0.3);
+  transform-origin: 50% 100%;
+}
+
+.np[data-playing="true"] .np-live span {
+  animation: np-bar 0.9s ease-in-out infinite;
+}
+
+.np-live span:nth-child(2) {
+  animation-delay: -0.3s;
+}
+
+.np-live span:nth-child(3) {
+  animation-delay: -0.6s;
+}
+
+@keyframes np-bar {
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+.np-close {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  color: var(--hud-ink-2);
+  transition: background-color 0.25s;
+}
+
+.np-close:hover {
+  background: rgba(236, 234, 226, 0.1);
+  color: var(--hud-ink);
+}
+
+.np-close .icon {
+  width: 15px;
+  height: 15px;
+}
+
+/* YouTube's player needs at least 200 × 200 pixels. */
+.np-video {
+  height: 200px;
+  min-width: 200px;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #000;
+}
+
+.np-video[hidden] {
+  display: none;
+}
+
+.np-video iframe {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.np-song {
+  margin-top: 12px;
+}
+
+.np-title {
+  font-family: var(--display);
+  font-size: 1.65rem;
+  font-stretch: 62%;
+  font-weight: 900;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.np-meta {
+  margin-top: 6px;
+  color: var(--hud-ink-2);
+  font-size: 10.5px;
+}
+
+.np-problem {
+  margin-top: 8px;
+  color: #ffb4a8;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.np-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.np-controls button {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--hud-line);
+  border-radius: 50%;
+  transition:
+    border-color 0.25s,
+    background-color 0.25s;
+}
+
+.np-controls button:hover:not(:disabled) {
+  border-color: var(--hud-accent);
+}
+
+.np-controls button:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.np-controls .icon {
+  width: 15px;
+  height: 15px;
+}
+
+.np-controls .np-play {
+  width: 46px;
+  height: 46px;
+  border: 0;
+  background: var(--accent);
+  color: #fff;
+}
+
+.np-controls .np-play:hover:not(:disabled) {
+  background: #1a7ae0;
+}
+
+.np-count {
+  margin-left: auto;
+  color: var(--hud-ink-2);
+  font-size: 10.5px;
+}
+
+/* On phones, while a section is open, the card shrinks to one line. */
+.np[data-compact="true"] {
+  top: 64px;
+  width: min(300px, calc(100vw - var(--gutter) * 2));
+  padding: 6px 6px 6px 14px;
+  border-radius: 999px;
+}
+
+.np[data-compact="true"] .np-video,
+.np[data-compact="true"] .np-song,
+.np[data-compact="true"] .np-controls {
+  display: none;
+}
+
+.np-mini {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: #fff;
+}
+
+.np-mini .icon {
+  width: 13px;
+  height: 13px;
 }
 
 /* ----------------------------------------------------------------- panel */
@@ -920,7 +1139,7 @@ html[data-panel="bottom"] .hud-cv {
   overflow: hidden;
   border-radius: 20px;
   background:
-    radial-gradient(120% 90% at 30% 10%, rgba(200, 245, 60, 0.3), transparent 60%),
+    radial-gradient(120% 90% at 30% 10%, rgba(0, 102, 204, 0.55), transparent 65%),
     #141a1e;
 }
 
@@ -931,14 +1150,14 @@ html[data-panel="bottom"] .hud-cv {
 }
 
 .avatar span {
-  color: #c8f53c;
+  color: #8cc0ff;
   font-size: 2.6rem;
 }
 
 .sec-quote {
   margin-top: 26px;
   padding-left: 18px;
-  border-left: 2px solid var(--accent);
+  border-left: 2px solid var(--accent-hi);
   font-family: var(--serif);
   font-size: clamp(1.5rem, 2.2vw, 2rem);
   line-height: 1.15;
@@ -1250,7 +1469,7 @@ html[data-panel="bottom"] .hud-cv {
   height: 46px;
   border-radius: 50%;
   background: var(--accent);
-  color: #0a0c0d;
+  color: var(--on-accent);
   font-size: 1.2rem;
   font-weight: 800;
 }
@@ -1321,7 +1540,7 @@ html[data-panel="bottom"] .hud-cv {
 .reserved-cursor {
   width: 8px;
   height: 15px;
-  background: var(--accent);
+  background: var(--accent-hi);
   animation: blink 1.1s steps(1) infinite;
 }
 
@@ -1519,7 +1738,7 @@ html[data-panel="bottom"] .hud-cv {
 
 .button-primary {
   background: var(--accent);
-  color: #0a0c0d;
+  color: var(--on-accent);
 }
 
 .button-primary::before {
@@ -1540,7 +1759,7 @@ html[data-panel="bottom"] .hud-cv {
 }
 
 .button-secondary:hover {
-  color: #0a0c0d;
+  color: var(--on-accent);
 }
 
 /* A number whose digits roll into place (see Odometer in ui.tsx). */
@@ -1599,6 +1818,142 @@ html[data-panel="bottom"] .hud-cv {
   margin-left: 0.04em;
   color: var(--accent-text);
   font-size: 0.5em;
+}
+
+/* ------------------------------------------------------------ easter egg */
+
+.egg-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 30px;
+}
+
+.egg {
+  position: relative;
+  overflow: hidden;
+  padding: 24px;
+  border-radius: 22px;
+  background: var(--card);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+
+.egg-tag,
+.egg-meta {
+  position: relative;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.egg-title {
+  position: relative;
+  margin-top: 10px;
+  font-family: var(--display);
+  font-size: clamp(2.6rem, 6vw, 3.8rem);
+  font-stretch: 62%;
+  font-weight: 900;
+  line-height: 0.86;
+  text-transform: uppercase;
+}
+
+.egg-quote {
+  position: relative;
+  margin-top: 14px;
+  font-family: var(--serif);
+  font-size: clamp(1.45rem, 2.4vw, 1.9rem);
+  font-style: italic;
+  line-height: 1.1;
+}
+
+.egg-meta {
+  margin-top: 12px;
+  opacity: 0.8;
+}
+
+.egg-text {
+  position: relative;
+  max-width: 36ch;
+  margin-top: 12px;
+}
+
+.egg .link-arrow {
+  position: relative;
+  margin-top: 16px;
+  color: inherit;
+}
+
+/* Arsenal: red and white. */
+.egg-theme-arsenal {
+  background: #db0007;
+  box-shadow: none;
+  color: #fff;
+}
+
+.egg-theme-arsenal .egg-tag {
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.egg-stripes {
+  position: absolute;
+  top: -20%;
+  right: -12%;
+  bottom: -20%;
+  width: 46%;
+  background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.16) 0 16px, transparent 16px 34px);
+  transform: skewX(-14deg);
+}
+
+/* The world record: a dark blue certificate with a gold seal. */
+.egg-theme-record {
+  background:
+    radial-gradient(130% 120% at 100% 0%, rgba(77, 155, 255, 0.32), transparent 55%),
+    linear-gradient(160deg, #1d3566, #0b1830);
+  box-shadow: inset 0 0 0 1px rgba(226, 184, 90, 0.5);
+  color: #f3efe2;
+}
+
+.egg-theme-record .egg-tag {
+  color: #e8c46e;
+}
+
+.egg-theme-record .egg-tag,
+.egg-theme-record .egg-title {
+  padding-right: 96px;
+}
+
+.egg-seal {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  display: grid;
+  place-content: center;
+  width: 86px;
+  height: 86px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #f7df95, #c99a34 72%);
+  box-shadow:
+    0 0 0 4px rgba(226, 184, 90, 0.25),
+    0 10px 30px -10px rgba(0, 0, 0, 0.6);
+  color: #3a2a05;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1.2;
+  text-align: center;
+  text-transform: uppercase;
+  transform: rotate(-10deg);
+}
+
+.egg-seal strong {
+  font-family: var(--display);
+  font-size: 1.7rem;
+  font-stretch: 75%;
+  font-weight: 900;
+  letter-spacing: 0;
+  line-height: 1;
 }
 
 /* ---------------------------------------------------------- text version */
@@ -1722,8 +2077,9 @@ html[data-panel="bottom"] .hud-cv {
   }
 
   .live-dot::after,
-  .reserved-cursor {
-    animation: none;
+  .reserved-cursor,
+  .np-live span {
+    animation: none !important;
   }
 }
 
@@ -1737,7 +2093,7 @@ html[data-panel="bottom"] .hud-cv {
     --ink: #000;
     --ink-2: #333;
     --ink-3: #555;
-    --accent-text: #2f5200;
+    --accent-text: #004a99;
     --line: #ccc;
     --line-2: #999;
   }
@@ -1760,6 +2116,7 @@ html[data-panel="bottom"] .hud-cv {
   .hud-hint,
   .hud-nav,
   .hud-cv,
+  .np,
   .contact-actions,
   .copy-button,
   .skip-link {

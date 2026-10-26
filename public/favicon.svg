@@ -1,10 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 64 64">
-  <style>
-    .tile { fill: #141a1e; }
-    .ink { fill: #f3f2ee; }
-    .accent { fill: #e2b664; }
-  </style>
-  <rect class="tile" width="64" height="64" rx="15" />
-  <text class="ink" x="29" y="45" text-anchor="middle" font-family="'Inter Tight', 'Helvetica Neue', Arial, sans-serif" font-size="36" font-weight="800" letter-spacing="-1.5">K</text>
-  <circle class="accent" cx="47" cy="42" r="4" />
+  <rect width="64" height="64" rx="15" fill="#0b1220" />
+  <circle cx="32" cy="32" r="22" fill="#0066cc" />
+  <text x="32" y="39.5" text-anchor="middle" fill="#ffffff" font-family="'Archivo', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="20" font-weight="900" letter-spacing="-0.5">KSI</text>
 </svg>

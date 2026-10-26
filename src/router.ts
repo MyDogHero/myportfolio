@@ -20,7 +20,12 @@ export const routes = [
   { id: "experience", slug: "experience", label: "Experience", object: "ID cards" },
   { id: "achievements", slug: "achievements", label: "Achievements", object: "Trophy shelf" },
   { id: "contact", slug: "contact", label: "Contact", object: "Desk phone" },
+  // The easter egg: opened by the football, and kept out of the menu.
+  { id: "easter", slug: "off-the-clock", label: "Off the clock", object: "Football" },
 ] as const;
+
+/* The sections listed in the menu and the text version (everything but home and the easter egg). */
+export const menuRoutes = routes.filter((item) => item.id !== "home" && item.id !== "easter");
 
 export type RouteId = (typeof routes)[number]["id"];
 

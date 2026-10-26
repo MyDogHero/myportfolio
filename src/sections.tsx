@@ -1,7 +1,7 @@
 /*
  * What each object in the room opens: the About, Education, Experience,
- * Achievements and Contact sections. The same sections make up the plain
- * text version of the site.
+ * Achievements and Contact sections (the same sections make up the plain
+ * text version of the site), plus the hidden section behind the football.
  */
 import { type ReactNode, useRef } from "react";
 import { Clock } from "@/components/effects";
@@ -14,6 +14,7 @@ import {
   caseStudy,
   certifications,
   contact,
+  easterEgg,
   education,
   experience,
   experienceHeadline,
@@ -463,6 +464,52 @@ function ContactSection({ idPrefix }: { idPrefix: string }) {
   );
 }
 
+/* ------------------------------------------------------------- easter egg */
+
+function EasterSection({ idPrefix }: { idPrefix: string }) {
+  return (
+    <>
+      <header className="sec-head" data-reveal>
+        <p className="sec-kicker">
+          <span className="sec-num">★</span> {easterEgg.kicker}
+        </p>
+        <h2 className="sec-title" id={`${idPrefix}easter-title`} tabIndex={-1}>
+          <Rich text={easterEgg.headline} />
+        </h2>
+      </header>
+      {easterEgg.intro ? (
+        <p className="sec-lede" data-reveal>
+          {easterEgg.intro}
+        </p>
+      ) : null}
+      <ul className="egg-list">
+        {easterEgg.items.map((item, index) => (
+          <li className={`egg egg-theme-${item.theme ?? "plain"}`} data-reveal key={`${item.title}-${index}`}>
+            {item.theme === "arsenal" ? <span className="egg-stripes" aria-hidden="true" /> : null}
+            {item.theme === "record" ? (
+              <span className="egg-seal" aria-hidden="true">
+                <span>World</span>
+                <strong>№1</strong>
+                <span>Record</span>
+              </span>
+            ) : null}
+            {item.tag ? <p className="egg-tag">{item.tag}</p> : null}
+            <h3 className="egg-title">{item.title}</h3>
+            {item.record ? <p className="egg-quote">“{item.record}”</p> : null}
+            {item.issuer || item.date ? <p className="egg-meta">{metaLine(item.issuer, item.date)}</p> : null}
+            {item.text ? <p className="egg-text">{item.text}</p> : null}
+            {item.link ? (
+              <a className="link-arrow" href={item.link.url} target="_blank" rel="noopener noreferrer">
+                {item.link.label} <ArrowUpRight />
+              </a>
+            ) : null}
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+}
+
 /* ------------------------------------------------------------------ index */
 
 export const sectionIds: SectionId[] = ["about", "education", "experience", "achievements", "contact"];
@@ -475,6 +522,7 @@ export function Section({ id, mode, idPrefix = "" }: { id: SectionId; mode: Sect
     experience: <ExperienceSection idPrefix={idPrefix} />,
     achievements: <AchievementsSection mode={mode} idPrefix={idPrefix} />,
     contact: <ContactSection idPrefix={idPrefix} />,
+    easter: <EasterSection idPrefix={idPrefix} />,
   }[id];
   return (
     <div className="sec" ref={ref} data-section={id}>

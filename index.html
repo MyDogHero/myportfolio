@@ -11,7 +11,7 @@
     <meta name="author" content="Kaustubh Santosh Iyer" />
     <meta name="robots" content="index, follow" />
     <meta name="color-scheme" content="dark light" />
-    <meta name="theme-color" content="#0a0c0d" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#05080d" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#eeede6" media="(prefers-color-scheme: light)" />
 
     <meta property="og:type" content="profile" />
@@ -26,7 +26,7 @@
     <meta property="og:image:height" content="630" />
     <meta
       property="og:image:alt"
-      content="Kaustubh Santosh Iyer, BBA (Hons.) student at T. A. Pai Management Institute, Bengaluru"
+      content="Kaustubh Santosh Iyer, student at T. A. Pai Management Institute: an interactive 3D office at night in Bengaluru"
     />
     <meta property="profile:first_name" content="Kaustubh" />
     <meta property="profile:last_name" content="Iyer" />
@@ -50,6 +50,62 @@
     />
   </head>
   <body>
+    <!-- The loading screen, shown until the room (or the text version) is ready. -->
+    <div class="boot" id="boot" role="status" aria-live="polite">
+      <style>
+        .boot { position: fixed; inset: 0; z-index: 90; display: flex; flex-direction: column; padding: 18px clamp(16px, 2.6vw, 36px) max(24px, env(safe-area-inset-bottom)); overflow: hidden; background: linear-gradient(rgba(77, 155, 255, 0.07) 1px, transparent 1px) 0 0 / 56px 56px, linear-gradient(90deg, rgba(77, 155, 255, 0.07) 1px, transparent 1px) 0 0 / 56px 56px, radial-gradient(120% 90% at 85% 110%, #0d2a55 0%, #081428 42%, #05080d 75%); color: #eceae2; font: 500 12px/1.4 "JetBrains Mono", ui-monospace, Menlo, Consolas, monospace; letter-spacing: 0.06em; text-transform: uppercase; transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s, visibility 0s linear 1.2s; }
+        .boot[data-done="true"] { transform: translateY(-100%); visibility: hidden; }
+        .boot-top { display: flex; justify-content: space-between; gap: 16px; color: rgba(236, 234, 226, 0.68); }
+        .boot-where { margin-top: 6px; color: rgba(77, 155, 255, 0.75); }
+        .boot-mark { display: grid; place-items: center; width: 64px; height: 64px; margin: auto 0 22px; border-radius: 50%; background: #0066cc; color: #fff; font: 900 20px/1 "Archivo", "Arial Narrow", Arial, sans-serif; letter-spacing: 0; box-shadow: 0 0 0 1px rgba(77, 155, 255, 0.5), 0 0 60px rgba(0, 102, 204, 0.65); animation: boot-pulse 1.6s ease-in-out infinite; }
+        .boot-line { color: #4d9bff; }
+        .boot-count { margin-top: 8px; font: 900 clamp(6rem, 24vw, 22rem)/0.8 "Archivo", "Arial Narrow", Arial, sans-serif; font-stretch: 62%; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+        .boot-bar { position: relative; height: 2px; margin-top: 18px; overflow: hidden; background: rgba(236, 234, 226, 0.14); }
+        .boot-bar span { position: absolute; inset: 0; background: linear-gradient(90deg, #2e5090, #0066cc 60%, #4d9bff); transform: scaleX(0); transform-origin: 0 50%; transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes boot-pulse { 50% { transform: scale(0.94); box-shadow: 0 0 0 1px rgba(77, 155, 255, 0.3), 0 0 30px rgba(0, 102, 204, 0.4); } }
+        @media (prefers-reduced-motion: reduce) { .boot { transition: opacity 0.4s, visibility 0s linear 0.4s; } .boot[data-done="true"] { transform: none; opacity: 0; } .boot-mark { animation: none; } }
+        @media print { .boot { display: none; } }
+      </style>
+      <p class="boot-top"><span>Kaustubh Santosh Iyer</span><span>Portfolio</span></p>
+      <p class="boot-where">12.97° N · 77.59° E · Bengaluru</p>
+      <span class="boot-mark" aria-hidden="true">KSI</span>
+      <p class="boot-line">Opening the office in Bengaluru…</p>
+      <p class="boot-count" aria-hidden="true">000</p>
+      <span class="boot-bar" aria-hidden="true"><span></span></span>
+    </div>
+    <script>
+      /* Counts up while the site downloads; the room takes it to 100 (see src/boot.ts). */
+      (function () {
+        var boot = document.getElementById("boot");
+        var count = boot.querySelector(".boot-count");
+        var bar = boot.querySelector(".boot-bar span");
+        var shown = 0;
+        var finished = false;
+        function set(value) {
+          if (finished || value <= shown) return;
+          shown = Math.min(100, value);
+          count.textContent = ("00" + Math.round(shown)).slice(-3);
+          bar.style.transform = "scaleX(" + shown / 100 + ")";
+        }
+        var creep = setInterval(function () {
+          if (shown >= 58) return clearInterval(creep);
+          set(shown + (60 - shown) * 0.06 + 0.2);
+        }, 50);
+        window.__boot = {
+          set: set,
+          done: function () {
+            if (finished) return;
+            set(100);
+            finished = true;
+            clearInterval(creep);
+            boot.setAttribute("data-done", "true");
+            setTimeout(function () {
+              boot.remove();
+            }, 1400);
+          },
+        };
+      })();
+    </script>
     <div id="root"></div>
     <noscript>
       <p style="padding: 24px; font-family: system-ui, sans-serif">

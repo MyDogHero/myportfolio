@@ -57,3 +57,47 @@ export const Pin = ({ className }: IconProps) => (
     <circle cx="12" cy="10" r="2.3" />
   </svg>
 );
+
+export const Play = ({ className }: IconProps) => (
+  <svg {...base} className={`icon ${className ?? ""}`}>
+    <path d="M8 5.5v13l10.5-6.5L8 5.5Z" fill="currentColor" />
+  </svg>
+);
+
+export const Pause = ({ className }: IconProps) => (
+  <svg {...base} className={`icon ${className ?? ""}`}>
+    <path d="M8.5 5.5v13M15.5 5.5v13" strokeWidth={3} />
+  </svg>
+);
+
+export const Previous = ({ className }: IconProps) => (
+  <svg {...base} className={`icon ${className ?? ""}`}>
+    <path d="M6 5.5v13M18 6l-9 6 9 6V6Z" fill="currentColor" />
+  </svg>
+);
+
+export const Next = ({ className }: IconProps) => (
+  <svg {...base} className={`icon ${className ?? ""}`}>
+    <path d="M18 5.5v13M6 6l9 6-9 6V6Z" fill="currentColor" />
+  </svg>
+);
+
+export const Close = ({ className }: IconProps) => (
+  <svg {...base} className={`icon ${className ?? ""}`}>
+    <path d="M6 6l12 12M18 6 6 18" />
+  </svg>
+);
+
+export const SoundOn = ({ className }: IconProps) => (
+  <svg {...base} className={`icon ${className ?? ""}`}>
+    <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4v-5Z" />
+    <path d="M15.5 9a4 4 0 0 1 0 6M18 6.5a7.5 7.5 0 0 1 0 11" />
+  </svg>
+);
+
+export const SoundOff = ({ className }: IconProps) => (
+  <svg {...base} className={`icon ${className ?? ""}`}>
+    <path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4v-5Z" />
+    <path d="m16 9.5 5 5M21 9.5l-5 5" />
+  </svg>
+);
