@@ -26,13 +26,15 @@ https://kaustubhiyer.netlify.app. See README.md for the file layout.
 - Three hotspots have no marker: the football opens the hidden `easter` route
   (`/off-the-clock/`, kept out of the menu, sitemap and text version on
   purpose); the speaker (`radio`) opens the Now Playing card, but only when
-  `music.songs` in content.js is not empty; and the book lying open, face
-  down, on the desk (`reading`, from `reading` in content.js) opens the
+  `music.songs` in content.js is not empty; and the book lying open, pages
+  up, on the right of the desk (`reading`, from `reading` in content.js) opens the
   `reading` route (`/currently-reading/`, not in the menu; in the text
   version it follows About, and About's card links to it). In that view the
   seat (chair + character) rolls back and swivels to face the camera, the
   arms re-pose with two-bone IK (`solveElbow` in `src/scene/kit.ts`) and the
-  book floats into his hands with its cover towards the viewer
+  book floats into his hands with its cover towards the viewer, first
+  forward past his right side and then straight across, so it never passes
+  through the chair or his body
   (`BOOK_HOLD` in props.ts; `setFocus` in room.ts drives it). Covers are
   drawn from the title and author.
 - The room follows the real time in Bengaluru (`src/scene/daylight.ts`;

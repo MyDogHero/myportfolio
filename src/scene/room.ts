@@ -414,9 +414,9 @@ export function buildRoom(options: { still: boolean }): Room {
   const notebook = mesh(
     boxg(0.21, 0.012, 0.28),
     [dark, dark, std("#ffffff", { map: texture(notebookTexture()) }), dark, dark, dark],
-    [deskX + 1.05, 0.826, deskZ - 0.3],
+    [deskX - 1.1, 0.826, deskZ + 0.15],
   );
-  notebook.rotation.y = -0.2;
+  notebook.rotation.y = 0.25;
   group.add(notebook);
 
   // Desk lamp with a warm light.
@@ -517,10 +517,11 @@ export function buildRoom(options: { still: boolean }): Room {
 
   /* ------------------------------------- the book: currently reading */
 
-  // The book lies open, face down, on the desk beside the mug. Opening
+  // The book lies open, pages up, on the right of the desk. Opening
   // "Currently reading" rolls the chair back, swivels it round to face the
-  // room, and floats the book into Kaustubh's hands; the camera then sees him
-  // reading, with the cover (title and author) towards us.
+  // room, and floats the book into Kaustubh's hands: first forward past his
+  // right side (clear of the chair), then straight across into his hands. The
+  // camera then sees him reading, with the cover (title and author) towards us.
   let readGoal = 0;
   let read = 0;
   let bookHover = false;
@@ -528,11 +529,16 @@ export function buildRoom(options: { still: boolean }): Room {
   if (reading.title) {
     const book = buildBook(reading.title, reading.author);
     group.add(book.group);
-    // Resting: pages down (book +z → down), its top towards the back of the desk (book +y → -z).
-    const restPosition = v(deskX - 1.06, 0.82 + Math.sin(0.5) * book.width + 0.004, deskZ + 0.27);
+    // Resting: open and nearly flat, pages up (book +z → up), its top towards the back of the desk (book +y → -z).
+    const restFold = 0.12;
+    const restPosition = v(deskX + 0.62, 0.828, deskZ + 0.06);
     const restQuaternion = new THREE.Quaternion()
-      .setFromAxisAngle(v(0, 1, 0), 0.3)
-      .multiply(new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(v(-1, 0, 0), v(0, 0, -1), v(0, -1, 0))));
+      .setFromAxisAngle(v(0, 1, 0), -0.2)
+      .multiply(new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(v(1, 0, 0), v(0, 0, -1), v(0, 1, 0))));
+    book.setFold(restFold);
+    // On the way, the book passes this far to his right (to the viewer's right) before moving across.
+    const besideHim = v(0.91, 0, -0.41).multiplyScalar(0.55).add(v(0, 0.08, 0));
+    const waypoint = new THREE.Vector3();
     book.group.position.copy(restPosition);
     book.group.quaternion.copy(restQuaternion);
 
@@ -565,20 +571,23 @@ export function buildRoom(options: { still: boolean }): Room {
       seat.rotation.y = facing + turnBy * turn;
       person.setReading(read);
       seat.updateMatrixWorld(true);
-      const lift = smooth(0.35, 1, read);
+      const lift = smooth(0.45, 1, read);
       if (lift === 0) {
         // Pointed at, it lifts off the desk a little.
         bookLift = approach(bookLift, bookHover && !still ? 1 : 0, 8, delta);
         book.group.position.copy(restPosition).setY(restPosition.y + bookLift * 0.03);
         book.group.quaternion.copy(restQuaternion);
-        book.setFold(0.5);
+        book.setFold(restFold);
         return;
       }
       held.multiplyMatrices(person.group.matrixWorld, holdLocal).decompose(heldPosition, heldQuaternion, scale);
-      book.group.position.lerpVectors(restPosition, heldPosition, lift);
-      book.group.position.y += Math.sin(lift * Math.PI) * 0.12;
-      book.group.quaternion.slerpQuaternions(restQuaternion, heldQuaternion, lift);
-      book.setFold(0.5 - lift * 0.08);
+      waypoint.copy(heldPosition).add(besideHim);
+      // First leg: from the desk to beside him; second leg: straight across into his hands.
+      const leg = smooth(0, 0.55, lift);
+      const across = smooth(0.55, 1, lift);
+      book.group.position.lerpVectors(restPosition, waypoint, leg).lerp(heldPosition, across);
+      book.group.quaternion.slerpQuaternions(restQuaternion, heldQuaternion, smooth(0, 0.8, lift));
+      book.setFold(restFold + (0.42 - restFold) * lift);
     });
 
     addSpot({
