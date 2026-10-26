@@ -382,19 +382,37 @@ window.PORTFOLIO_CONTENT = {
   //            the label has licensed it. The video shows in the card.
   //   file:    the name of an audio file you have uploaded into the folder
   //            public/music/ (only for recordings you have permission to use).
+  // Optional: credit (who made the recording and its licence, shown small in
+  // the card) and creditUrl (where the licence can be checked). Recordings
+  // marked "CC BY" or "CC BY-SA" must keep their credit.
   //
   //     {
   //       title: "Song title",
-  //       artist: "Singer",
-  //       film: "Film (year)",
-  //       youtube: "https://www.youtube.com/watch?v=...",
+  //       artist: "Singer or composer",
+  //       file: "music/song-name.mp3",
+  //       credit: "Performer · licence",
+  //       creditUrl: "https://...",
   //     },
   //
-  // PLACEHOLDER: add your songs here. While the list is empty, the speaker
-  // stays in the room as decoration and can't be clicked.
+  // The songs below are free to use: public domain recordings.
   music: {
     title: "Radio KSI",
-    songs: [],
+    songs: [
+      {
+        title: "Air on the G String",
+        artist: "J. S. Bach",
+        file: "music/air-on-the-g-string.mp3",
+        credit: "Air Force Strings, U.S. Air Force Band · public domain",
+        creditUrl: "https://commons.wikimedia.org/wiki/File:Air_-_Air_Force_Strings_-_United_States_Air_Force_Band.mp3",
+      },
+      {
+        title: "Nocturne in E-flat, Op. 9 No. 2",
+        artist: "Frédéric Chopin",
+        file: "music/chopin-nocturne-op9-no2.mp3",
+        credit: "Musopen · public domain (CC0)",
+        creditUrl: "https://archive.org/details/musopen-chopin",
+      },
+    ],
   },
 
   // ====================================================== SECTION TITLES ==
