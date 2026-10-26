@@ -6,7 +6,7 @@
 import { type ReactNode, useRef } from "react";
 import { Clock } from "@/components/effects";
 import { ArrowUpRight, Download, LinkedIn, Mail, Pin } from "@/components/icons";
-import { CopyButton, MagneticButton, Odometer, Reserved, Rich } from "@/components/ui";
+import { CopyButton, MagneticButton, Odometer, PageLink, Reserved, Rich } from "@/components/ui";
 import {
   about,
   achievements,
@@ -62,6 +62,64 @@ function Sub({ children }: { children: ReactNode }) {
   );
 }
 
+/* ---------------------------------------------------------------- reading */
+
+/* The "Currently reading" card: a small drawn cover beside the title and author. */
+function ReadingCard({ children }: { children?: ReactNode }) {
+  return (
+    <div className="reading" data-reveal>
+      <span className="reading-cover" aria-hidden="true">
+        <span className="reading-cover-title">{reading.title}</span>
+        {reading.author ? <span className="reading-cover-author">{reading.author}</span> : null}
+      </span>
+      <div className="reading-body">
+        <p className="mono">
+          <span className="live-dot" aria-hidden="true" /> Currently reading
+        </p>
+        <p className="reading-title">{reading.title}</p>
+        {reading.author ? <p className="reading-author">by {reading.author}</p> : null}
+        {children}
+      </div>
+    </div>
+  );
+}
+
+/* Opened by clicking the book on the desk: the card, and why this book. */
+function ReadingSection({ idPrefix }: { idPrefix: string }) {
+  return (
+    <>
+      <header className="sec-head" data-reveal>
+        <p className="sec-kicker">
+          <span className="sec-num">◆</span> Currently reading
+          <span className="sec-object"> · Book on the desk</span>
+        </p>
+        <h2 className="sec-title" id={`${idPrefix}reading-title`} tabIndex={-1}>
+          <Rich text={reading.headline} />
+        </h2>
+      </header>
+      {reading.title ? (
+        <>
+          <ReadingCard />
+          {reading.note.length ? (
+            <>
+              <Sub>Why this book</Sub>
+              {reading.note.map((paragraph) => (
+                <p className="sec-text reading-note" data-reveal key={paragraph}>
+                  <Rich text={paragraph} />
+                </p>
+              ))}
+            </>
+          ) : null}
+        </>
+      ) : (
+        <p className="sec-lede" data-reveal>
+          Nothing on the go right now. Check back soon.
+        </p>
+      )}
+    </>
+  );
+}
+
 /* ------------------------------------------------------------------ about */
 
 function AboutSection({ mode, idPrefix }: { mode: SectionMode; idPrefix: string }) {
@@ -99,19 +157,13 @@ function AboutSection({ mode, idPrefix }: { mode: SectionMode; idPrefix: string 
         </dl>
       ) : null}
       {reading.title ? (
-        <div className="reading" data-reveal>
-          <span className="reading-cover" aria-hidden="true">
-            <span className="reading-cover-title">{reading.title}</span>
-            {reading.author ? <span className="reading-cover-author">{reading.author}</span> : null}
-          </span>
-          <div className="reading-body">
-            <p className="mono">
-              <span className="live-dot" aria-hidden="true" /> Currently reading
-            </p>
-            <p className="reading-title">{reading.title}</p>
-            {reading.author ? <p className="reading-author">by {reading.author}</p> : null}
-          </div>
-        </div>
+        <ReadingCard>
+          {reading.note.length ? (
+            <PageLink to="reading" className="link-arrow reading-link">
+              Why I'm reading it <ArrowUpRight />
+            </PageLink>
+          ) : null}
+        </ReadingCard>
       ) : null}
 
       {highlights.length ? (
@@ -539,6 +591,7 @@ export function Section({ id, mode, idPrefix = "" }: { id: SectionId; mode: Sect
     achievements: <AchievementsSection mode={mode} idPrefix={idPrefix} />,
     contact: <ContactSection idPrefix={idPrefix} />,
     easter: <EasterSection idPrefix={idPrefix} />,
+    reading: <ReadingSection idPrefix={idPrefix} />,
   }[id];
   return (
     <div className="sec" ref={ref} data-section={id}>

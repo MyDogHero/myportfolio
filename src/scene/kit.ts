@@ -39,6 +39,46 @@ export function limb(from: THREE.Vector3, to: THREE.Vector3, radius: number, mat
   return rod;
 }
 
+/* Moves a rod made by `limb` so it runs between two new points (its length stays the same). */
+const UP = new THREE.Vector3(0, 1, 0);
+const along = new THREE.Vector3();
+export function poseLimb(rod: THREE.Object3D, from: THREE.Vector3, to: THREE.Vector3) {
+  rod.position.copy(from).add(to).multiplyScalar(0.5);
+  along.subVectors(to, from).normalize();
+  rod.quaternion.setFromUnitVectors(UP, along);
+}
+
+/*
+ * Where the elbow goes when the shoulder and hand are at these points and the
+ * upper arm and forearm have these lengths. `pole` is the way the elbow
+ * points. Writes the elbow into `elbow` and returns the reachable hand point.
+ */
+const reach = new THREE.Vector3();
+const bend = new THREE.Vector3();
+export function solveElbow(
+  shoulder: THREE.Vector3,
+  hand: THREE.Vector3,
+  upper: number,
+  fore: number,
+  pole: THREE.Vector3,
+  elbow: THREE.Vector3,
+  reached: THREE.Vector3,
+) {
+  reach.subVectors(hand, shoulder);
+  const distance = Math.min(Math.max(reach.length(), Math.abs(upper - fore) + 1e-4), upper + fore - 1e-4);
+  reach.normalize();
+  const x = (upper * upper - fore * fore + distance * distance) / (2 * distance);
+  const h = Math.sqrt(Math.max(0, upper * upper - x * x));
+  bend.copy(pole).addScaledVector(reach, -pole.dot(reach)).normalize();
+  elbow.copy(shoulder).addScaledVector(reach, x).addScaledVector(bend, h);
+  return reached.copy(shoulder).addScaledVector(reach, distance);
+}
+
+export const smooth = (edge0: number, edge1: number, value: number) => {
+  const t = Math.min(1, Math.max(0, (value - edge0) / (edge1 - edge0)));
+  return t * t * (3 - 2 * t);
+};
+
 /* A squashed sphere: heads, bodies, cushions of hair. */
 export function blob(
   radius: number,

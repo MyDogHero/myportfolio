@@ -4,8 +4,17 @@
  * simple shapes and has a `tick` that animates it.
  */
 import * as THREE from "three";
-import { GLOW, bookCoverTexture, fabricTexture, grilleTexture, texture, zTexture } from "./textures";
-import { approach, blob, boxg, cushionGeometry, glow, limb, mesh, rbox, std, v } from "./kit";
+import {
+  GLOW,
+  bookBackTexture,
+  bookCoverTexture,
+  bookPageTexture,
+  fabricTexture,
+  grilleTexture,
+  texture,
+  zTexture,
+} from "./textures";
+import { approach, blob, boxg, cushionGeometry, glow, limb, mesh, poseLimb, rbox, smooth, solveElbow, std, v } from "./kit";
 
 type Tick = (time: number, delta: number, still: boolean) => void;
 
@@ -33,16 +42,18 @@ function frameGeometry(width: number, height: number, rim: number, radius: numbe
   return geometry;
 }
 
+/* Where he holds a book to read it, in his own frame (he faces -z): in front of his chest, tipped towards his face. */
+export const BOOK_HOLD = { position: v(0, 1.0, -0.31), tilt: -0.35 };
+
 /*
  * Kaustubh, typing at the desk: dark brown skin, a mustache, black
  * rounded-rectangle glasses and side-parted, medium-long hair. Now and then
- * he glances round; pointing at him makes him look your way.
+ * he glances round; pointing at him makes him look your way. `setReading`
+ * (0 to 1) moves his hands from the keyboard to hold a book and tips his head
+ * down to read. `keys` is the keyboard's position in his own frame.
  */
-export function buildPerson(options: { position: THREE.Vector3; rotationY: number; keyboard: THREE.Vector3 }) {
+export function buildPerson(options: { keys: THREE.Vector3 }) {
   const group = new THREE.Group();
-  group.position.copy(options.position);
-  group.rotation.y = options.rotationY;
-  group.updateMatrixWorld(true);
 
   const skin = std("#5b3a24", { roughness: 0.62 });
   const hair = std("#140e0a", { roughness: 0.55 });
@@ -114,41 +125,71 @@ export function buildPerson(options: { position: THREE.Vector3; rotationY: numbe
   back.rotation.x = 0.15;
   head.add(back);
 
-  // Arms reaching to the keyboard (worked out in the person's own frame).
-  const keys = group.worldToLocal(options.keyboard.clone());
-  const hands: THREE.Mesh[] = [];
-  [-1, 1].forEach((side) => {
+  // Arms: an upper arm and a forearm each, posed every frame so the hands can
+  // move between the keyboard and a book. The elbow is worked out from where
+  // the hand is (the arm lengths never change).
+  const arms = [-1, 1].map((side) => {
     const shoulder = v(side * 0.2, 1.075, 0);
     const elbow = v(side * 0.235, 0.86, -0.13);
-    const hand = keys.clone().add(v(side * 0.09, 0.025, 0.02));
-    group.add(limb(shoulder, elbow, 0.048, shirt));
-    group.add(limb(elbow, hand, 0.041, shirt));
-    const palm = blob(0.037, [1, 0.6, 1.25], skin, [hand.x, hand.y, hand.z], 14);
-    palm.userData.rest = hand.y;
-    hands.push(palm);
-    group.add(palm);
+    const typing = options.keys.clone().add(v(side * 0.09, 0.025, 0.02));
+    // Holding the book by its outer edges.
+    const holding = v(side * 0.125, BOOK_HOLD.position.y - 0.02, BOOK_HOLD.position.z + 0.06);
+    const toTyping = typing.clone().sub(shoulder).normalize();
+    const typingPole = elbow.clone().sub(shoulder);
+    typingPole.addScaledVector(toTyping, -typingPole.dot(toTyping)).normalize();
+    const upper = limb(shoulder, elbow, 0.048, shirt);
+    const fore = limb(elbow, typing, 0.041, shirt);
+    const palm = blob(0.037, [1, 0.6, 1.25], skin, [typing.x, typing.y, typing.z], 14);
+    group.add(upper, fore, palm);
+    return {
+      side,
+      shoulder,
+      typing,
+      holding,
+      typingPole,
+      holdingPole: v(side * 0.7, -1, 0.15).normalize(),
+      upperLength: shoulder.distanceTo(elbow),
+      foreLength: elbow.distanceTo(typing),
+      upper,
+      fore,
+      palm,
+    };
   });
+  const target = new THREE.Vector3();
+  const pole = new THREE.Vector3();
+  const elbowAt = new THREE.Vector3();
+  const handAt = new THREE.Vector3();
 
   let watching = false;
+  let reading = 0;
   let nextGlance = 4 + Math.random() * 6;
   let glanceUntil = 0;
   let turn = 0;
   const tick: Tick = (time, delta, still) => {
     const t = time / 1000;
+    const hold = smooth(0.15, 0.85, reading);
+    arms.forEach((arm, i) => {
+      const tap = still ? 0 : Math.max(0, Math.sin(t * 13 + i * 2.1)) * 0.009 * (1 - hold);
+      target.copy(arm.typing).setY(arm.typing.y + tap).lerp(arm.holding, hold);
+      pole.copy(arm.typingPole).lerp(arm.holdingPole, hold).normalize();
+      solveElbow(arm.shoulder, target, arm.upperLength, arm.foreLength, pole, elbowAt, handAt);
+      poseLimb(arm.upper, arm.shoulder, elbowAt);
+      poseLimb(arm.fore, elbowAt, handAt);
+      arm.palm.position.copy(handAt);
+    });
     if (!still) {
-      hands.forEach((palm, i) => {
-        palm.position.y = palm.userData.rest + Math.max(0, Math.sin(t * 13 + i * 2.1)) * 0.009;
-      });
       torso.scale.y = 1 + Math.sin(t * 1.6) * 0.006;
       if (t > nextGlance) {
         glanceUntil = t + 1.8;
         nextGlance = t + 9 + Math.random() * 8;
       }
     }
-    const looking = watching || t < glanceUntil;
+    const looking = (watching || t < glanceUntil) && reading === 0;
     turn = approach(turn, looking && !still ? -1.05 : 0, 5, delta);
     head.rotation.y = turn;
-    head.rotation.x = looking ? -0.05 : 0.09 + (still ? 0 : Math.sin(t * 0.8) * 0.02);
+    const idle = looking ? -0.05 : 0.09 + (still ? 0 : Math.sin(t * 0.8) * 0.02);
+    // Reading: eyes down on the page.
+    head.rotation.x = idle + (-0.3 - idle) * hold;
   };
 
   return {
@@ -156,6 +197,9 @@ export function buildPerson(options: { position: THREE.Vector3; rotationY: numbe
     tick,
     setWatching: (on: boolean) => {
       watching = on;
+    },
+    setReading: (amount: number) => {
+      reading = amount;
     },
   };
 }
@@ -292,34 +336,39 @@ export function buildDog() {
 
 /* ------------------------------------------------------------------ book */
 
-/* The book being read, lying cover-up with a blue ribbon bookmark. It lifts a little when pointed at. */
+/*
+ * The book being read, as a hinged pair of halves. In its own frame the spine
+ * runs up the y-axis, the pages face +z and the covers face -z; the front
+ * cover is the -x half. `setFold` sets how far each half is folded from flat
+ * (0 = fully open). Lying face-down on the desk it makes a little tent with
+ * the covers up; held up to read, the covers face whoever is looking at him.
+ */
 export function buildBook(title: string, author: string) {
   const group = new THREE.Group();
-  const book = new THREE.Group();
-  group.add(book);
+  const width = 0.14;
+  const height = 0.21;
+  const edge = std("#e6dfcf", { roughness: 0.7 });
   const pages = std("#f3eee1", { roughness: 0.9 });
-  const board = std("#e6dfcf", { roughness: 0.7 });
-  const cover = std("#ffffff", { map: texture(bookCoverTexture(title, author)), roughness: 0.7 });
-  // Box faces: +x, -x, +y (the cover), -y, +z, -z.
-  book.add(mesh(boxg(0.175, 0.032, 0.26), [pages, board, cover, board, pages, pages], [0, 0.016, 0]));
-  const ribbon = mesh(boxg(0.014, 0.002, 0.08), std("#0066cc", { roughness: 0.6 }), [0.04, 0.002, 0.16], { cast: false });
-  ribbon.rotation.y = 0.2;
-  book.add(ribbon);
-
-  let hover = false;
-  let lift = 0;
-  const tick: Tick = (_time, delta, still) => {
-    lift = approach(lift, hover && !still ? 1 : 0, 8, delta);
-    book.position.y = lift * 0.035;
-    book.rotation.x = -lift * 0.18;
+  const pageFace = std("#ffffff", { map: texture(bookPageTexture()), roughness: 0.9 });
+  const covers = [
+    std("#ffffff", { map: texture(bookCoverTexture(title, author)), roughness: 0.65 }),
+    std("#ffffff", { map: texture(bookBackTexture(title, author)), roughness: 0.65 }),
+  ];
+  // Box faces: +x, -x, +y, -y, +z (inside), -z (outside).
+  const halves = [-1, 1].map((side, i) => {
+    const half = new THREE.Group();
+    half.add(mesh(boxg(width, height, 0.004), [edge, edge, edge, edge, edge, covers[i]], [(side * width) / 2, 0, -0.002]));
+    half.add(mesh(boxg(width - 0.006, height - 0.008, 0.012), [pages, pages, pages, pages, pageFace, pages], [side * (width / 2 - 0.002), 0, 0.006]));
+    group.add(half);
+    return half;
+  });
+  group.add(mesh(boxg(0.012, height, 0.008), edge, [0, 0, -0.004]));
+  const setFold = (fold: number) => {
+    halves[0].rotation.y = fold;
+    halves[1].rotation.y = -fold;
   };
-  return {
-    group,
-    tick,
-    setHover: (on: boolean) => {
-      hover = on;
-    },
-  };
+  setFold(0.5);
+  return { group, setFold, width };
 }
 
 /* --------------------------------------------------------------- speaker */

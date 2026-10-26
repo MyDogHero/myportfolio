@@ -142,7 +142,7 @@ export type EasterEgg = {
   items: EasterItem[];
 };
 
-export type Reading = { title: string; author: string };
+export type Reading = { title: string; author: string; headline: string; note: string[] };
 
 export type Song = {
   title: string;
@@ -371,7 +371,12 @@ export const easterEgg: EasterEgg = {
 
 const readingRaw = (pick("reading") ?? {}) as Partial<Reading>;
 /* The book on the couch. An empty title hides it everywhere. */
-export const reading: Reading = { title: text(readingRaw.title), author: text(readingRaw.author) };
+export const reading: Reading = {
+  title: text(readingRaw.title),
+  author: text(readingRaw.author),
+  headline: text(readingRaw.headline, "What I'm reading."),
+  note: list<string>(readingRaw.note).filter((paragraph) => text(paragraph)),
+};
 
 const musicRaw = (pick("music") ?? {}) as Partial<{ title: string; songs: Song[] }>;
 export const music = {

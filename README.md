@@ -100,10 +100,12 @@ you can copy.
 - **The ticker on the wall** → `ticker`. Put a ▲ in an item to make it light
   up like a rising stock.
 - **The neon sign** → `sign` (near the top, in `profile`).
-- **The book you're reading** → `reading` (title and author). It lies on the
-  couch next to the dog, with its title on the cover; pointing at it says
-  "Now reading", and clicking it opens About, which shows a "Currently
-  reading" card. Set the title to `""` to hide it.
+- **The book you're reading** → `reading`: the title, the author and a short
+  note on why you're reading it. The book lies open, face down, on the desk
+  by the mug. Clicking it (or "Why I'm reading it" in About) opens
+  `/currently-reading/`: your chair rolls back and turns to face the room,
+  you pick the book up and read it (visitors see the cover), and a panel
+  beside you shows the book and your note. Set the title to `""` to hide it.
 
 ## Music on the speaker
 

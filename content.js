@@ -128,12 +128,19 @@ window.PORTFOLIO_CONTENT = {
     ],
   },
 
-  // The book you're reading now. It lies on the couch in the room (with its
-  // title on the cover) and shows in the About panel. Change it when you start
-  // a new one, or set the title to "" to hide it.
+  // The book you're reading now. It lies open on the desk in the room; when a
+  // visitor clicks it, you pick it up and read, and a panel beside you shows
+  // the title, the author and why you're reading it. About links to it too.
+  // Change it when you start a new book, or set the title to "" to hide it.
   reading: {
     title: "1984",
     author: "George Orwell",
+    headline: "What I'm *reading*.",
+    // Why you're reading it: one or more paragraphs (*stars* = accent style).
+    note: [
+      "I picked up *1984* because it's about what happens when power controls information: who gets to decide what's true, and how language itself can be bent to narrow what people are able to think.",
+      "As a business student I keep noticing echoes of it in how data is collected and used, in how a story gets built around a set of numbers, and in how easily a convenient narrative crowds out an honest one. It's a good reminder to question the figures in front of me, and to say things plainly.",
+    ],
   },
 
   // Newest first. "result" is the number shown on the right. Leave figure ""
