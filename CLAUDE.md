@@ -27,7 +27,8 @@ https://kaustubhiyer.netlify.app. See README.md for the file layout.
   (`/off-the-clock/`, kept out of the menu, sitemap and text version on
   purpose); the speaker (`radio`) opens the Now Playing card, but only when
   `music.songs` in content.js is not empty; and the book lying open, pages
-  up, on the right of the desk (`reading`, from `reading` in content.js) opens the
+  up, at the right-hand edge of the desk, clear of the phone and business
+  card so their click areas never overlap (`reading`, from `reading` in content.js) opens the
   `reading` route (`/currently-reading/`, not in the menu; in the text
   version it follows About, and About's card links to it). In that view the
   seat (chair + character) rolls back and swivels to face the camera, the
