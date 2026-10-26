@@ -353,7 +353,7 @@ export function buildFootball() {
   }
   const position = geometry.getAttribute("position");
   const colors: number[] = [];
-  const red = new THREE.Color("#d10a11");
+  const red = new THREE.Color("#1a1a1a");
   const white = new THREE.Color("#f3f1ec");
   for (let i = 0; i < position.count; i += 3) {
     const centre = new THREE.Vector3()
