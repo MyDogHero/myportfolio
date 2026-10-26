@@ -9,7 +9,7 @@ T. A. Pai Management Institute, Bengaluru.
 
 The home page is a **3D office in Bengaluru**, lit in Science Blue: you at
 your desk, typing, with an Indie dog on the couch. Every object in the room is
-part of the portfolio. Floating blue ▲ markers show what can be clicked:
+part of the portfolio. Floating blue ▼ markers show what can be clicked:
 
 | Object in the room | Opens | Address |
 | --- | --- | --- |
@@ -34,7 +34,8 @@ the wall, and the wall clock shows Bengaluru time.
 
 **Sound.** Clicks, opening and closing panels, and pointing at objects make
 small sounds. They are made in the browser (no audio files). Visitors can
-switch them off with the speaker button at the top; the site remembers.
+switch all sound off (the music too) with the speaker button at the top; the
+site remembers.
 
 There is also a **Text version** button (top right): the same content as one
 plain scrolling page. It is used automatically on devices that can't show 3D,
@@ -102,9 +103,27 @@ you can copy.
 
 ## Music on the speaker
 
-The speaker next to the couch can play songs, with a small "Now playing" card
-that shows the song and skips between them. It stays silent (and can't be
-clicked) until you add songs to `music` in `content.js`.
+Clicking the speaker next to the couch starts the music and opens a small
+"Now playing" card: the song, who plays it, a bar to jump to any point, a
+volume slider (phones use their own volume buttons), and back, play/pause and
+skip. The – button shrinks the card to one line while the music carries on;
+clicking the speaker again stops the music.
+
+It comes with six calm, human-played recordings of famous pieces, all free to
+use. Recordings marked CC BY or CC BY-SA must keep their credit, which the
+card shows:
+
+| Piece | Played by | Licence |
+| --- | --- | --- |
+| Satie, Gymnopédie No. 1 | Michael Laucke, guitar | CC BY-SA 4.0 |
+| Debussy, Clair de Lune | Laurens Goedhart, piano | CC BY 3.0 |
+| Bach, Air on the G String | Air Force Strings, U.S. Air Force Band | Public domain |
+| Saint-Saëns, The Swan | John Michel, cello | CC BY-SA 3.0 |
+| Chopin, Nocturne Op. 9 No. 2 | Musopen | Public domain (CC0) |
+| Bach, Cello Suite No. 1: Prelude | John Michel, cello | CC BY-SA 3.0 |
+
+The files are in `public/music/` and the list (with credits and links to each
+licence) is `music` in `content.js`. To remove a song, delete its entry there.
 
 **About copyright.** Classic Bollywood songs are almost all still under
 copyright in India: the recording, and separately the music and the lyrics,
@@ -132,7 +151,7 @@ Use links from official channels, check that the video says it can be
 embedded (if it can't, the card skips it and says so), and don't upload song
 files unless you have permission. A recording you own or have a licence for
 can go in `public/music/` and be listed with `file: "music/name.mp3"`
-instead of `youtube:`.
+instead of `youtube:` (this is how the six songs above are added, with no ads).
 ## Publishing
 
 **Automatic (recommended).** Link the Netlify site to this repository once:

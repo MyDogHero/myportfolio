@@ -101,3 +101,15 @@ export const SoundOff = ({ className }: IconProps) => (
     <path d="m16 9.5 5 5M21 9.5l-5 5" />
   </svg>
 );
+
+export const Minimise = ({ className }: IconProps) => (
+  <svg {...base} className={`icon ${className ?? ""}`}>
+    <path d="M6 12h12" />
+  </svg>
+);
+
+export const Expand = ({ className }: IconProps) => (
+  <svg {...base} className={`icon ${className ?? ""}`}>
+    <path d="M6 9l6 6 6-6" />
+  </svg>
+);

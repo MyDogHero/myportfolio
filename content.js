@@ -394,10 +394,25 @@ window.PORTFOLIO_CONTENT = {
   //       creditUrl: "https://...",
   //     },
   //
-  // The songs below are free to use: public domain recordings.
+  // The songs below are free to use: public domain recordings, or recordings
+  // the musicians shared under a Creative Commons licence (keep their credit).
   music: {
     title: "Radio KSI",
     songs: [
+      {
+        title: "Gymnopédie No. 1",
+        artist: "Erik Satie",
+        file: "music/satie-gymnopedie-no1-guitar.mp3",
+        credit: "Michael Laucke, guitar · CC BY-SA 4.0",
+        creditUrl: "https://commons.wikimedia.org/wiki/File:Satie_Gymnopedie_No_1_performed_by_Michael_Laucke.flac",
+      },
+      {
+        title: "Clair de Lune",
+        artist: "Claude Debussy",
+        file: "music/debussy-clair-de-lune.mp3",
+        credit: "Laurens Goedhart, piano · CC BY 3.0",
+        creditUrl: "https://commons.wikimedia.org/wiki/File:Clair_de_lune_(Claude_Debussy)_Suite_bergamasque.ogg",
+      },
       {
         title: "Air on the G String",
         artist: "J. S. Bach",
@@ -406,11 +421,25 @@ window.PORTFOLIO_CONTENT = {
         creditUrl: "https://commons.wikimedia.org/wiki/File:Air_-_Air_Force_Strings_-_United_States_Air_Force_Band.mp3",
       },
       {
+        title: "The Swan",
+        artist: "Camille Saint-Saëns",
+        file: "music/saint-saens-the-swan.mp3",
+        credit: "John Michel, cello · CC BY-SA 3.0",
+        creditUrl: "https://commons.wikimedia.org/wiki/File:JOHN_MICHEL_CELLO-SAINT_SAENS_CARNIVAL_OF_ANIMALS_THE_SWAN.ogg",
+      },
+      {
         title: "Nocturne in E-flat, Op. 9 No. 2",
         artist: "Frédéric Chopin",
         file: "music/chopin-nocturne-op9-no2.mp3",
         credit: "Musopen · public domain (CC0)",
         creditUrl: "https://archive.org/details/musopen-chopin",
+      },
+      {
+        title: "Cello Suite No. 1: Prelude",
+        artist: "J. S. Bach",
+        file: "music/bach-cello-suite-1-prelude.mp3",
+        credit: "John Michel, cello · CC BY-SA 3.0",
+        creditUrl: "https://commons.wikimedia.org/wiki/File:JOHN_MICHEL_CELLO-J_S_BACH_CELLO_SUITE_1_in_G_Prelude.ogg",
       },
     ],
   },

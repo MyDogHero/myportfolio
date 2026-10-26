@@ -22,6 +22,8 @@ let context: AudioContext | null = null;
 let output: GainNode | null = null;
 
 function audio() {
+  // A closed context can't be reopened, so start a fresh one.
+  if (context?.state === "closed") context = null;
   if (!context) {
     const Context = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!Context) return null;
@@ -33,13 +35,20 @@ function audio() {
   return context;
 }
 
-/* Browsers only allow sound after the visitor has touched the page, so wake the audio on the first touch. */
+/*
+ * Browsers only allow sound after the visitor has touched the page, and they
+ * can pause it again later: Safari, for one, "interrupts" it when the music
+ * starts or stops. So every touch, key press or return to the tab wakes the
+ * audio up again if it isn't running.
+ */
 function unlock() {
   const ctx = enabled ? audio() : null;
-  if (ctx?.state === "suspended") ctx.resume().catch(() => {});
+  if (ctx && ctx.state !== "running") ctx.resume().catch(() => {});
 }
 window.addEventListener("pointerdown", unlock, { capture: true, passive: true });
+window.addEventListener("touchend", unlock, { capture: true, passive: true });
 window.addEventListener("keydown", unlock, { capture: true });
+document.addEventListener("visibilitychange", () => !document.hidden && unlock());
 
 /* One soft note: a sine (or triangle) with a quick attack and a gentle fade. */
 function note(ctx: AudioContext, frequency: number, start: number, length: number, volume: number, type: OscillatorType = "sine", slideTo?: number) {
@@ -81,7 +90,22 @@ let lastHover = 0;
 export function play(cue: Cue) {
   if (!enabled) return;
   const ctx = audio();
-  if (!ctx || ctx.state !== "running") return;
+  if (!ctx) return;
+  if (ctx.state === "running") {
+    sound(ctx, cue);
+    return;
+  }
+  // The browser has paused the audio: wake it, then play, if that's quick enough to still feel instant.
+  const asked = performance.now();
+  ctx
+    .resume()
+    .then(() => {
+      if (ctx.state === "running" && performance.now() - asked < 400) sound(ctx, cue);
+    })
+    .catch(() => {});
+}
+
+function sound(ctx: AudioContext, cue: Cue) {
   const t = ctx.currentTime + 0.005;
   switch (cue) {
     case "click":

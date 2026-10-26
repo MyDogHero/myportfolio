@@ -45,6 +45,7 @@ export default function App() {
     return start === "home" ? null : start;
   });
   const [radioOn, setRadioOn] = useState(false);
+  const [radioSmall, setRadioSmall] = useState(false);
   const [playing, setPlaying] = useState(false);
   const narrow = useMedia(NARROW);
   const routeRef = useRef(route);
@@ -140,11 +141,14 @@ export default function App() {
 
   const fail = useCallback(() => setTextMode(true), []);
 
+  // The speaker starts the music (and opens the card); clicking it again stops it.
   const toggleRadio = useCallback(() => {
     play("toggle");
+    setRadioSmall(false);
     setRadioOn((on) => !on);
   }, []);
-  const closeRadio = useCallback(() => setRadioOn(false), []);
+  const minimiseRadio = useCallback(() => setRadioSmall(true), []);
+  const expandRadio = useCallback(() => setRadioSmall(false), []);
 
   const panelOpen = !textMode && route !== "home";
   const panelSide: PanelSide = panelOpen ? (narrow ? "bottom" : "right") : "none";
@@ -185,7 +189,14 @@ export default function App() {
         {textMode ? <TextMode current={route} /> : <Panel section={lastSection} open={panelOpen} />}
       </main>
 
-      {radioOn && music.songs.length ? <NowPlaying compact={panelSide === "bottom"} onClose={closeRadio} onPlayingChange={setPlaying} /> : null}
+      {radioOn && music.songs.length ? (
+        <NowPlaying
+          minimised={radioSmall || panelSide === "bottom"}
+          onMinimise={minimiseRadio}
+          onExpand={expandRadio}
+          onPlayingChange={setPlaying}
+        />
+      ) : null}
 
       <Hud textMode={textMode} onToggleText={toggleText} />
       <div className="grain" aria-hidden="true" />
