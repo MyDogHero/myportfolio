@@ -1,4 +1,4 @@
-# Used only if the Netlify site is linked to this GitHub repository.
+# Used when the Netlify site is linked to this GitHub repository.
 # Netlify then rebuilds and publishes the site every time a change is saved here.
 
 [build]
@@ -7,3 +7,10 @@
 
 [build.environment]
   NODE_VERSION = "22"
+
+# The code and style files have a fingerprint in their names, so browsers can
+# keep them for a year; a new build gives them new names.
+[[headers]]
+  for = "/assets/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
