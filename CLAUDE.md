@@ -21,7 +21,7 @@ https://kaustubhiyer.netlify.app. See README.md for the file layout.
   glasses, side-parted hair) and a cream Indie dog on the couch. Objects are
   sections: monitors/person → About, bookshelf → Education, pegboard ID cards
   → Experience, trophy shelf → Achievements, desk phone → Contact. Each has a
-  floating blue ▲ marker, an HTML label button (for keyboard and touch), a
+  floating blue ▼ marker (pointing down at it), an HTML label button (for keyboard and touch), a
   hover effect and a camera view (`hotspots` in `src/scene/room.ts`).
 - Two hotspots have no marker: the football opens the hidden `easter` route
   (`/off-the-clock/`, kept out of the menu, sitemap and text version on
@@ -42,11 +42,22 @@ https://kaustubhiyer.netlify.app. See README.md for the file layout.
   lifts it when the room (or the text version) is ready. If WebGL is missing,
   or the visitor picks "Text version", `src/components/TextMode.tsx` shows
   every section on one page. Printing always uses the text version.
-- `src/sound.ts` makes the UI sounds with WebAudio (no files); the HUD has a
-  mute button remembered in localStorage. `src/components/NowPlaying.tsx`
-  plays YouTube links in YouTube's own player (keep it visible and at least
-  200×200 while playing; on phones it shrinks to one line and pauses YouTube
-  while a panel is open) or audio files from `public/music/`.
+- `src/sound.ts` makes the UI sounds with WebAudio (no files) and wakes the
+  audio context from any paused state on each touch (Safari "interrupts" it
+  when music starts or stops). The HUD mute button silences everything, the
+  music included, and is remembered in localStorage.
+- Music: clicking the speaker starts the music and opens
+  `src/components/NowPlaying.tsx`; clicking it again stops the music. The
+  card's – button only shrinks it to one line (music keeps playing). It has a
+  seek bar and a volume slider (hidden where browsers ignore volume, i.e.
+  iOS). Six free recordings live in `public/music/` (128 kbps MP3,
+  loudness-matched); their credits are in content.js and must stay. YouTube
+  links play in YouTube's own player (keep it visible and at least 200×200
+  while playing; YouTube songs pause while the card is shrunk).
+- The side walls and an invisible ceiling cast shadows, so moon and sun light
+  only enter through the window. The right wall closes the room when looking
+  towards the plant; it is a single-sided plane, so it never blocks the
+  camera's usual spot outside it.
 
 ## Content
 

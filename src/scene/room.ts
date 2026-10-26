@@ -92,13 +92,14 @@ function screen(width: number, height: number, map: THREE.Texture, brightness = 
   );
 }
 
-/* The floating ▲ that marks something you can open. */
+/* The floating ▼ that marks something you can open. */
 function makeMarker() {
   const group = new THREE.Group();
   const shape = new THREE.Shape();
-  shape.moveTo(0, 0.075);
-  shape.lineTo(0.068, -0.045);
-  shape.lineTo(-0.068, -0.045);
+  // Pointing down at the object it marks.
+  shape.moveTo(0, -0.075);
+  shape.lineTo(0.068, 0.045);
+  shape.lineTo(-0.068, 0.045);
   shape.closePath();
   const geometry = new THREE.ExtrudeGeometry(shape, {
     depth: 0.02,
@@ -180,15 +181,32 @@ export function buildRoom(options: { still: boolean }): Room {
   const backWall = mesh(new THREE.ExtrudeGeometry(outline, { depth: 0.14, bevelEnabled: false }), wallMaterial, [0, 0, -3.14]);
   group.add(backWall);
 
-  const leftWall = mesh(new THREE.PlaneGeometry(8, H), wallMaterial, [-4, H / 2, 1], { cast: false });
+  // The side walls cast shadows too, so moonlight and sunlight only come in through the window.
+  const leftWall = mesh(new THREE.PlaneGeometry(8, H), wallMaterial, [-4, H / 2, 1]);
   leftWall.rotation.y = Math.PI / 2;
   group.add(leftWall);
+  // The right wall closes the room off when you look round towards the plant. It is only
+  // drawn from the inside, so it never blocks the view from the camera's usual spot.
+  const rightWall = mesh(new THREE.PlaneGeometry(8, H), wallMaterial, [4.5, H / 2, 1]);
+  rightWall.rotation.y = -Math.PI / 2;
+  group.add(rightWall);
+  // An unseen ceiling that only blocks light, so the sun can't shine in over the walls.
+  const ceiling = new THREE.Mesh(
+    new THREE.PlaneGeometry(8.6, 8.2),
+    new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: false, side: THREE.DoubleSide }),
+  );
+  ceiling.rotation.x = Math.PI / 2;
+  ceiling.position.set(0.25, H, 1);
+  ceiling.castShadow = true;
+  group.add(ceiling);
 
   const trim = std("#0c1012", { roughness: 0.5 });
   group.add(mesh(boxg(8.5, 0.1, 0.03), trim, [0.25, 0.05, -2.985], { cast: false }));
   const leftTrim = mesh(boxg(8, 0.1, 0.03), trim, [-3.985, 0.05, 1], { cast: false });
   leftTrim.rotation.y = Math.PI / 2;
-  group.add(leftTrim);
+  const rightTrim = mesh(boxg(8, 0.1, 0.03), trim, [4.485, 0.05, 1], { cast: false });
+  rightTrim.rotation.y = Math.PI / 2;
+  group.add(leftTrim, rightTrim);
 
   const rug = mesh(new THREE.PlaneGeometry(3.4, 2.5), std("#ffffff", { map: texture(rugTexture()), roughness: 1 }), [-0.7, 0.006, -1.15], {
     cast: false,

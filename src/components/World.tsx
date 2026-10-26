@@ -30,7 +30,7 @@ export function webglAvailable() {
 
 /* What each label button says. */
 function labelFor(id: HotspotId, radioOn: boolean) {
-  if (id === "radio") return { num: "♪", label: radioOn ? "Now playing" : "Play music", object: "Speaker", kind: "radio" };
+  if (id === "radio") return { num: "♪", label: radioOn ? "Stop music" : "Play music", object: "Speaker", kind: "radio" };
   if (id === "easter") return { num: "?", label: "Kick it", object: "Football", kind: "secret" };
   const index = routes.findIndex((item) => item.id === id);
   return { num: pad(index), label: routes[index].label, object: routes[index].object, kind: "section" };

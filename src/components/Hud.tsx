@@ -28,8 +28,8 @@ export function Hud({ textMode, onToggleText }: { textMode: boolean; onToggleTex
             className="hud-button hud-sound"
             onClick={() => setSound(!sound)}
             aria-pressed={sound}
-            aria-label="Sound effects"
-            title={sound ? "Sound on" : "Sound off"}
+            aria-label="Sound"
+            title={sound ? "Sound is on (click to mute the site and the music)" : "Sound is off (click to turn it on)"}
           >
             {sound ? <SoundOn /> : <SoundOff />}
           </button>
@@ -49,7 +49,7 @@ export function Hud({ textMode, onToggleText }: { textMode: boolean; onToggleTex
 
       {!textMode ? (
         <p className="hud-hint" data-hidden={current !== "home"}>
-          Click a <span className="hud-tick">▲</span> to open it · drag to look around
+          Click a <span className="hud-tick">▼</span> to open it · drag to look around
         </p>
       ) : null}
 

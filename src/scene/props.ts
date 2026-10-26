@@ -5,7 +5,7 @@
  */
 import * as THREE from "three";
 import { GLOW, fabricTexture, grilleTexture, texture, zTexture } from "./textures";
-import { approach, blob, boxg, glow, limb, mesh, rbox, std, v } from "./kit";
+import { approach, blob, boxg, cushionGeometry, glow, limb, mesh, rbox, std, v } from "./kit";
 
 type Tick = (time: number, delta: number, still: boolean) => void;
 
@@ -179,9 +179,13 @@ export function buildCouch() {
     group.add(cushion);
     group.add(mesh(rbox(0.18, 0.42, 0.9, 0.06), fabric, [side * 0.9, 0.4, 0]));
   });
-  const pillow = mesh(rbox(0.36, 0.32, 0.1, 0.05), std("#bfb6a4", { roughness: 0.95 }), [0.62, 0.57, -0.13]);
-  pillow.rotation.set(-0.3, 0, 0.18);
+  // Two soft cushions leaning against the back: an off-white one and a blue one.
+  const pillow = mesh(cushionGeometry(0.4, 0.38, 0.16), std("#cfc6b2", { roughness: 0.95 }), [0.6, 0.6, -0.15]);
+  pillow.rotation.set(-0.32, 0, 0.16);
   group.add(pillow);
+  const bolster = mesh(cushionGeometry(0.34, 0.32, 0.14), std("#5672a8", { roughness: 0.95 }), [-0.78, 0.57, -0.16]);
+  bolster.rotation.set(-0.3, 0, -0.12);
+  group.add(bolster);
   return { group, seat: v(-0.44, 0.43, 0.1) };
 }
 
@@ -341,7 +345,7 @@ export function buildSpeaker() {
 
 /* -------------------------------------------------------------- football */
 
-/* A low-poly football in Arsenal red and white. It hops when pointed at. */
+/* A low-poly football in classic black and white. It hops when pointed at. */
 export function buildFootball() {
   const geometry = new THREE.IcosahedronGeometry(0.11, 1).toNonIndexed();
   const corners = new THREE.IcosahedronGeometry(1, 0);
