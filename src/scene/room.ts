@@ -19,11 +19,12 @@ import {
   focusAreas,
   music,
   profile,
+  reading,
   ticker,
 } from "@/content";
 import { assetUrl } from "@/router";
 import { approach, boxg, glow, mesh, rbox, std, v } from "./kit";
-import { buildCouch, buildDog, buildFootball, buildPerson, buildSpeaker } from "./props";
+import { buildBook, buildCouch, buildDog, buildFootball, buildPerson, buildSpeaker } from "./props";
 import {
   ChartScreen,
   GLOW,
@@ -57,10 +58,10 @@ import {
   wallTexture,
 } from "./textures";
 
-export type HotspotId = "about" | "education" | "experience" | "achievements" | "contact" | "easter" | "radio";
+export type HotspotId = "about" | "education" | "experience" | "achievements" | "contact" | "easter" | "radio" | "reading";
 
-/* Sections have a ▲ marker; the football is a secret; the speaker plays music. */
-export type HotspotKind = "section" | "secret" | "radio";
+/* Sections have a ▼ marker; the football is a secret; the speaker plays music; the book on the couch opens About. */
+export type HotspotKind = "section" | "secret" | "radio" | "reading";
 
 export type View = { position: THREE.Vector3; target: THREE.Vector3 };
 
@@ -907,6 +908,25 @@ export function buildRoom(options: { still: boolean }): Room {
   dog.group.position.copy(couch.seat);
   couch.group.add(dog.group);
   tickers.push((time, delta) => dog.tick(time, delta, still));
+
+  // The book being read, on the couch beside the dog.
+  if (reading.title) {
+    const book = buildBook(reading.title, reading.author);
+    book.group.position.set(0.3, 0.432, 0.2);
+    book.group.rotation.y = 0.45;
+    couch.group.add(book.group);
+    tickers.push((time, delta) => book.tick(time, delta, still));
+    couch.group.updateMatrixWorld(true);
+    addSpot({
+      id: "reading",
+      kind: "reading",
+      marker: false,
+      anchor: book.group.localToWorld(v(0, 0.05, 0)),
+      hits: [book.group],
+      view: null,
+      hover: book.setHover,
+    });
+  }
 
   // The speaker beside the couch.
   const speaker = buildSpeaker();

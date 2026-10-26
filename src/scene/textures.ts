@@ -590,6 +590,29 @@ export function idCardTexture(
 
 /* --------------------------------------------------------------- books */
 
+/* The cover of the book being read: its title big and black on cream, the author below a blue rule. */
+export function bookCoverTexture(title: string, author: string) {
+  const { canvas, ctx } = makeCanvas(512, 768);
+  ctx.fillStyle = "#efe9dc";
+  ctx.fillRect(0, 0, 512, 768);
+  noise(ctx, 512, 768, 10);
+  ctx.fillStyle = "rgba(0,0,0,0.14)";
+  ctx.fillRect(0, 0, 18, 768);
+  ctx.fillStyle = "#121416";
+  ctx.font = `900 260px ${SANS}`;
+  const lines = wrap(ctx, title.toUpperCase(), 600).slice(0, 3);
+  const size = lines.length > 1 ? 170 : 260;
+  lines.forEach((line, i) => condensed(ctx, line, 60, 300 + i * size * 0.9, size, 410));
+  ctx.fillStyle = SCIENCE;
+  ctx.fillRect(60, 560, 392, 10);
+  ctx.fillStyle = "#121416";
+  ctx.font = `600 34px ${MONO}`;
+  wrap(ctx, author.toUpperCase(), 392)
+    .slice(0, 2)
+    .forEach((line, i) => ctx.fillText(line, 60, 626 + i * 42));
+  return canvas;
+}
+
 export function spineTexture(title: string, color: string, light: boolean) {
   const { canvas, ctx } = makeCanvas(96, 640);
   ctx.fillStyle = color;

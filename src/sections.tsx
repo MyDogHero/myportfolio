@@ -25,6 +25,7 @@ import {
   profile,
   projects,
   projectsIntro,
+  reading,
   skills,
 } from "@/content";
 import { parseFigure } from "@/motion";
@@ -96,6 +97,21 @@ function AboutSection({ mode, idPrefix }: { mode: SectionMode; idPrefix: string 
             </div>
           ))}
         </dl>
+      ) : null}
+      {reading.title ? (
+        <div className="reading" data-reveal>
+          <span className="reading-cover" aria-hidden="true">
+            <span className="reading-cover-title">{reading.title}</span>
+            {reading.author ? <span className="reading-cover-author">{reading.author}</span> : null}
+          </span>
+          <div className="reading-body">
+            <p className="mono">
+              <span className="live-dot" aria-hidden="true" /> Currently reading
+            </p>
+            <p className="reading-title">{reading.title}</p>
+            {reading.author ? <p className="reading-author">by {reading.author}</p> : null}
+          </div>
+        </div>
       ) : null}
 
       {highlights.length ? (

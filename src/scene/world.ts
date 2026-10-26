@@ -16,7 +16,7 @@ import { bengaluruHour, dogAwakeAt, phaseAt } from "./daylight";
 import { type HotspotId, type Room, type View, buildRoom } from "./room";
 import type { Phase } from "./textures";
 
-export type Focus = "home" | Exclude<HotspotId, "radio">;
+export type Focus = "home" | Exclude<HotspotId, "radio" | "reading">;
 
 export type WorldOptions = {
   canvas: HTMLCanvasElement;

@@ -4,7 +4,7 @@
  * simple shapes and has a `tick` that animates it.
  */
 import * as THREE from "three";
-import { GLOW, fabricTexture, grilleTexture, texture, zTexture } from "./textures";
+import { GLOW, bookCoverTexture, fabricTexture, grilleTexture, texture, zTexture } from "./textures";
 import { approach, blob, boxg, cushionGeometry, glow, limb, mesh, rbox, std, v } from "./kit";
 
 type Tick = (time: number, delta: number, still: boolean) => void;
@@ -286,6 +286,38 @@ export function buildDog() {
     tick,
     setAwake: (on: boolean) => {
       awake = on;
+    },
+  };
+}
+
+/* ------------------------------------------------------------------ book */
+
+/* The book being read, lying cover-up with a blue ribbon bookmark. It lifts a little when pointed at. */
+export function buildBook(title: string, author: string) {
+  const group = new THREE.Group();
+  const book = new THREE.Group();
+  group.add(book);
+  const pages = std("#f3eee1", { roughness: 0.9 });
+  const board = std("#e6dfcf", { roughness: 0.7 });
+  const cover = std("#ffffff", { map: texture(bookCoverTexture(title, author)), roughness: 0.7 });
+  // Box faces: +x, -x, +y (the cover), -y, +z, -z.
+  book.add(mesh(boxg(0.175, 0.032, 0.26), [pages, board, cover, board, pages, pages], [0, 0.016, 0]));
+  const ribbon = mesh(boxg(0.014, 0.002, 0.08), std("#0066cc", { roughness: 0.6 }), [0.04, 0.002, 0.16], { cast: false });
+  ribbon.rotation.y = 0.2;
+  book.add(ribbon);
+
+  let hover = false;
+  let lift = 0;
+  const tick: Tick = (_time, delta, still) => {
+    lift = approach(lift, hover && !still ? 1 : 0, 8, delta);
+    book.position.y = lift * 0.035;
+    book.rotation.x = -lift * 0.18;
+  };
+  return {
+    group,
+    tick,
+    setHover: (on: boolean) => {
+      hover = on;
     },
   };
 }

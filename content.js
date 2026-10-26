@@ -128,6 +128,14 @@ window.PORTFOLIO_CONTENT = {
     ],
   },
 
+  // The book you're reading now. It lies on the couch in the room (with its
+  // title on the cover) and shows in the About panel. Change it when you start
+  // a new one, or set the title to "" to hide it.
+  reading: {
+    title: "1984",
+    author: "George Orwell",
+  },
+
   // Newest first. "result" is the number shown on the right. Leave figure ""
   // to show only the note (e.g. "In progress").
   education: [
