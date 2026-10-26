@@ -3,7 +3,7 @@
 The personal portfolio of Kaustubh Santosh Iyer, BBA (Hons.) student at
 T. A. Pai Management Institute, Bengaluru.
 
-**Live site:** https://kaustubhiyer.netlify.app
+**Live site:** https://kaustubhsiyer.netlify.app
 
 ## What the site is
 
