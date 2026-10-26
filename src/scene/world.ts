@@ -16,7 +16,7 @@ import { bengaluruHour, dogAwakeAt, phaseAt } from "./daylight";
 import { type HotspotId, type Room, type View, buildRoom } from "./room";
 import type { Phase } from "./textures";
 
-export type Focus = "home" | Exclude<HotspotId, "radio" | "reading">;
+export type Focus = "home" | Exclude<HotspotId, "radio">;
 
 export type WorldOptions = {
   canvas: HTMLCanvasElement;
@@ -208,6 +208,7 @@ export class World {
   /* Flies the camera to an object (or back to the whole room) and makes room for the panel. */
   focusOn(focus: Focus, panel: PanelSide, instant = false) {
     this.focus = focus;
+    this.room.setFocus(focus);
     this.yawGoal = 0;
     const view = this.viewFor(focus);
     const shiftGoal = panel === "right" ? { x: 0.2, y: 0 } : panel === "bottom" ? { x: 0, y: 0.3 } : { x: 0, y: 0 };

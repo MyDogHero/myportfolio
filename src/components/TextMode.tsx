@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import { bootDone } from "@/boot";
-import { profile } from "@/content";
+import { profile, reading } from "@/content";
 import { useReveal } from "@/motion";
 import type { RouteId } from "@/router";
 import { Section, type SectionId, sectionIds } from "@/sections";
@@ -16,7 +16,9 @@ export function TextMode({ current }: { current: RouteId }) {
   const ref = useRef<HTMLDivElement>(null);
   useReveal(ref, "scroll");
   useEffect(() => bootDone(), []);
-  const ids: SectionId[] = current === "easter" ? [...sectionIds, "easter"] : sectionIds;
+  // "Currently reading" follows About; the hidden football section only if its own address was opened.
+  const ids: SectionId[] = sectionIds.flatMap((id): SectionId[] => (id === "about" && reading.title ? ["about", "reading"] : [id]));
+  if (current === "easter") ids.push("easter");
   return (
     <div className="textmode" ref={ref}>
       <header className="tm-hero">

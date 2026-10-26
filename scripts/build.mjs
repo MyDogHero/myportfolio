@@ -47,6 +47,7 @@ const routes = [
   { slug: "contact", label: "Contact" },
   // The easter egg has its own address but stays out of the sitemap.
   { slug: "off-the-clock", label: "Off the clock", hidden: true },
+  { slug: "currently-reading", label: "Currently reading" },
 ];
 
 // Read content.js now, to catch a mistake before publishing and to name the pages.

@@ -613,6 +613,37 @@ export function bookCoverTexture(title: string, author: string) {
   return canvas;
 }
 
+/* The back cover: a few lines of blurb (just grey bars), the author and a blue rule. */
+export function bookBackTexture(title: string, author: string) {
+  const { canvas, ctx } = makeCanvas(512, 768);
+  ctx.fillStyle = "#efe9dc";
+  ctx.fillRect(0, 0, 512, 768);
+  noise(ctx, 512, 768, 10);
+  ctx.fillStyle = "rgba(0,0,0,0.14)";
+  ctx.fillRect(494, 0, 18, 768);
+  ctx.fillStyle = "#121416";
+  ctx.font = `600 30px ${MONO}`;
+  ctx.fillText(title.toUpperCase(), 60, 120);
+  ctx.fillStyle = "rgba(18,20,22,0.3)";
+  for (let i = 0; i < 9; i += 1) ctx.fillRect(60, 190 + i * 38, i === 8 ? 220 : 392 - (i % 3) * 30, 14);
+  ctx.fillStyle = SCIENCE;
+  ctx.fillRect(60, 600, 392, 8);
+  ctx.fillStyle = "#121416";
+  ctx.font = `600 30px ${MONO}`;
+  ctx.fillText(author.toUpperCase(), 60, 660);
+  return canvas;
+}
+
+/* A spread of printed lines, for the inside of the book. */
+export function bookPageTexture() {
+  const { canvas, ctx } = makeCanvas(256, 384);
+  ctx.fillStyle = "#f3eee1";
+  ctx.fillRect(0, 0, 256, 384);
+  ctx.fillStyle = "rgba(30,30,30,0.28)";
+  for (let y = 40; y < 350; y += 14) ctx.fillRect(26, y, 204 - ((y * 7) % 40), 5);
+  return canvas;
+}
+
 export function spineTexture(title: string, color: string, light: boolean) {
   const { canvas, ctx } = makeCanvas(96, 640);
   ctx.fillStyle = color;

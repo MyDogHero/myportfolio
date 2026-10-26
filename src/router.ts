@@ -22,10 +22,12 @@ export const routes = [
   { id: "contact", slug: "contact", label: "Contact", object: "Desk phone" },
   // The easter egg: opened by the football, and kept out of the menu.
   { id: "easter", slug: "off-the-clock", label: "Off the clock", object: "Football" },
+  // The book on the desk: opened by clicking it (or from About), not listed in the menu.
+  { id: "reading", slug: "currently-reading", label: "Currently reading", object: "Book on the desk" },
 ] as const;
 
-/* The sections listed in the menu and the text version (everything but home and the easter egg). */
-export const menuRoutes = routes.filter((item) => item.id !== "home" && item.id !== "easter");
+/* The sections listed in the menu (everything but home, the easter egg and the book). */
+export const menuRoutes = routes.filter((item) => item.id !== "home" && item.id !== "easter" && item.id !== "reading");
 
 export type RouteId = (typeof routes)[number]["id"];
 

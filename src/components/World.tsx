@@ -80,7 +80,6 @@ export function World({
 
   const choose = (id: HotspotId) => {
     if (id === "radio") radioRef.current();
-    else if (id === "reading") selectRef.current("about"); // the book opens About, where it's listed
     else selectRef.current(id);
   };
 
@@ -177,7 +176,7 @@ export function World({
                 kind === "secret"
                   ? "Football: a hidden section"
                   : kind === "reading"
-                    ? `Currently reading: ${[reading.title, reading.author].filter(Boolean).join(" by ")}. Opens About`
+                    ? `Currently reading: ${[reading.title, reading.author].filter(Boolean).join(" by ")}`
                     : undefined
               }
               onClick={() => choose(id)}

@@ -23,8 +23,8 @@ import {
   ticker,
 } from "@/content";
 import { assetUrl } from "@/router";
-import { approach, boxg, glow, mesh, rbox, std, v } from "./kit";
-import { buildBook, buildCouch, buildDog, buildFootball, buildPerson, buildSpeaker } from "./props";
+import { approach, boxg, glow, mesh, rbox, smooth, std, v } from "./kit";
+import { BOOK_HOLD, buildBook, buildCouch, buildDog, buildFootball, buildPerson, buildSpeaker } from "./props";
 import {
   ChartScreen,
   GLOW,
@@ -60,7 +60,7 @@ import {
 
 export type HotspotId = "about" | "education" | "experience" | "achievements" | "contact" | "easter" | "radio" | "reading";
 
-/* Sections have a ▼ marker; the football is a secret; the speaker plays music; the book on the couch opens About. */
+/* Sections have a ▼ marker; the football is a secret; the speaker plays music; the book on the desk opens "Currently reading". */
 export type HotspotKind = "section" | "secret" | "radio" | "reading";
 
 export type View = { position: THREE.Vector3; target: THREE.Vector3 };
@@ -82,6 +82,8 @@ export type Room = {
   tick: (time: number, delta: number) => void;
   setDaylight: (phase: Phase, dogAwake: boolean) => void;
   setPlaying: (on: boolean) => void;
+  /* Tells the room which view is showing, so Kaustubh can pick up the book when it's "reading". */
+  setFocus: (focus: "home" | HotspotId) => void;
 };
 
 /* --------------------------------------------------------------- helpers */
@@ -412,9 +414,9 @@ export function buildRoom(options: { still: boolean }): Room {
   const notebook = mesh(
     boxg(0.21, 0.012, 0.28),
     [dark, dark, std("#ffffff", { map: texture(notebookTexture()) }), dark, dark, dark],
-    [deskX - 1.1, 0.826, deskZ + 0.15],
+    [deskX + 1.05, 0.826, deskZ - 0.3],
   );
-  notebook.rotation.y = 0.25;
+  notebook.rotation.y = -0.2;
   group.add(notebook);
 
   // Desk lamp with a warm light.
@@ -469,11 +471,15 @@ export function buildRoom(options: { still: boolean }): Room {
     leg.translateX(0.15);
     chair.add(leg);
   }
-  chair.position.copy(seatSpot);
-  chair.rotation.y = facing;
-  group.add(chair);
-  const person = buildPerson({ position: seatSpot, rotationY: facing, keyboard: keyboardSpot });
-  group.add(person.group);
+  // The chair and Kaustubh move together (see "reading" below), so they share a seat.
+  const seat = new THREE.Group();
+  seat.position.copy(seatSpot);
+  seat.rotation.y = facing;
+  seat.add(chair);
+  seat.updateMatrixWorld(true);
+  const person = buildPerson({ keys: seat.worldToLocal(keyboardSpot.clone()) });
+  seat.add(person.group);
+  group.add(seat);
   tickers.push((time, delta) => person.tick(time, delta, still));
 
   const deskGlow = new THREE.PointLight(GLOW, 1.1, 2.4, 2);
@@ -508,6 +514,88 @@ export function buildRoom(options: { still: boolean }): Room {
   tickers.push((time) => {
     phone.position.x = deskX + 0.82 + (ringing && !still ? Math.sin(time / 22) * 0.004 : 0);
   });
+
+  /* ------------------------------------- the book: currently reading */
+
+  // The book lies open, face down, on the desk beside the mug. Opening
+  // "Currently reading" rolls the chair back, swivels it round to face the
+  // room, and floats the book into Kaustubh's hands; the camera then sees him
+  // reading, with the cover (title and author) towards us.
+  let readGoal = 0;
+  let read = 0;
+  let bookHover = false;
+  let bookLift = 0;
+  if (reading.title) {
+    const book = buildBook(reading.title, reading.author);
+    group.add(book.group);
+    // Resting: pages down (book +z → down), its top towards the back of the desk (book +y → -z).
+    const restPosition = v(deskX - 1.06, 0.82 + Math.sin(0.5) * book.width + 0.004, deskZ + 0.27);
+    const restQuaternion = new THREE.Quaternion()
+      .setFromAxisAngle(v(0, 1, 0), 0.3)
+      .multiply(new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(v(-1, 0, 0), v(0, 0, -1), v(0, -1, 0))));
+    book.group.position.copy(restPosition);
+    book.group.quaternion.copy(restQuaternion);
+
+    // Where the seat ends up: rolled back from the desk, turned to face the camera.
+    const towardCamera = v(0.45, 0, 1).normalize();
+    const slideBy = v(0.25, 0, 0.55);
+    const faceTo = Math.atan2(-towardCamera.x, -towardCamera.z);
+    let turnBy = faceTo - facing;
+    turnBy = Math.atan2(Math.sin(turnBy), Math.cos(turnBy));
+    const holdLocal = new THREE.Matrix4().compose(
+      BOOK_HOLD.position,
+      new THREE.Quaternion().setFromEuler(new THREE.Euler(BOOK_HOLD.tilt, 0, 0)),
+      v(1, 1, 1),
+    );
+    const finalSeat = new THREE.Object3D();
+    finalSeat.position.copy(seatSpot).add(slideBy);
+    finalSeat.rotation.y = facing + turnBy;
+    finalSeat.updateMatrixWorld(true);
+    const heldAt = BOOK_HOLD.position.clone().applyMatrix4(finalSeat.matrixWorld);
+
+    const held = new THREE.Matrix4();
+    const heldPosition = new THREE.Vector3();
+    const heldQuaternion = new THREE.Quaternion();
+    const scale = new THREE.Vector3();
+    tickers.push((_, delta) => {
+      read = still ? readGoal : Math.min(1, Math.max(0, read + Math.sign(readGoal - read) * delta * 0.6));
+      const slide = smooth(0, 0.45, read);
+      const turn = smooth(0.25, 1, read);
+      seat.position.copy(seatSpot).addScaledVector(slideBy, slide);
+      seat.rotation.y = facing + turnBy * turn;
+      person.setReading(read);
+      seat.updateMatrixWorld(true);
+      const lift = smooth(0.35, 1, read);
+      if (lift === 0) {
+        // Pointed at, it lifts off the desk a little.
+        bookLift = approach(bookLift, bookHover && !still ? 1 : 0, 8, delta);
+        book.group.position.copy(restPosition).setY(restPosition.y + bookLift * 0.03);
+        book.group.quaternion.copy(restQuaternion);
+        book.setFold(0.5);
+        return;
+      }
+      held.multiplyMatrices(person.group.matrixWorld, holdLocal).decompose(heldPosition, heldQuaternion, scale);
+      book.group.position.lerpVectors(restPosition, heldPosition, lift);
+      book.group.position.y += Math.sin(lift * Math.PI) * 0.12;
+      book.group.quaternion.slerpQuaternions(restQuaternion, heldQuaternion, lift);
+      book.setFold(0.5 - lift * 0.08);
+    });
+
+    addSpot({
+      id: "reading",
+      kind: "reading",
+      marker: false,
+      anchor: restPosition.clone().add(v(0, 0.06, 0)),
+      hits: [book.group],
+      view: {
+        position: heldAt.clone().addScaledVector(towardCamera, 1.55).add(v(0, 0.26, 0)),
+        target: heldAt.clone().add(v(0, 0.12, 0)),
+      },
+      hover: (on) => {
+        bookHover = on;
+      },
+    });
+  }
 
   /* ------------------------------------------- pegboard: experience */
 
@@ -909,25 +997,6 @@ export function buildRoom(options: { still: boolean }): Room {
   couch.group.add(dog.group);
   tickers.push((time, delta) => dog.tick(time, delta, still));
 
-  // The book being read, on the couch beside the dog.
-  if (reading.title) {
-    const book = buildBook(reading.title, reading.author);
-    book.group.position.set(0.3, 0.432, 0.2);
-    book.group.rotation.y = 0.45;
-    couch.group.add(book.group);
-    tickers.push((time, delta) => book.tick(time, delta, still));
-    couch.group.updateMatrixWorld(true);
-    addSpot({
-      id: "reading",
-      kind: "reading",
-      marker: false,
-      anchor: book.group.localToWorld(v(0, 0.05, 0)),
-      hits: [book.group],
-      view: null,
-      hover: book.setHover,
-    });
-  }
-
   // The speaker beside the couch.
   const speaker = buildSpeaker();
   speaker.group.position.set(1.3, 0, -1.3);
@@ -992,5 +1061,8 @@ export function buildRoom(options: { still: boolean }): Room {
     tick: (time, delta) => tickers.forEach((fn) => fn(time, delta)),
     setDaylight,
     setPlaying: speaker.setPlaying,
+    setFocus: (focus) => {
+      readGoal = focus === "reading" ? 1 : 0;
+    },
   };
 }
