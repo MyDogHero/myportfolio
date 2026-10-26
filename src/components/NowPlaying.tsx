@@ -236,6 +236,17 @@ export function NowPlaying({
       <div className="np-song" aria-live="polite">
         <p className="np-title">{song.title}</p>
         {details ? <p className="np-meta">{details}</p> : null}
+        {song.credit ? (
+          <p className="np-credit">
+            {song.creditUrl ? (
+              <a href={song.creditUrl} target="_blank" rel="noopener noreferrer">
+                {song.credit}
+              </a>
+            ) : (
+              song.credit
+            )}
+          </p>
+        ) : null}
         {problem ? <p className="np-problem">{problem}</p> : null}
       </div>
       <div className="np-controls">

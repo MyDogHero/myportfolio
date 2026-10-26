@@ -148,6 +148,9 @@ export type Song = {
   film?: string;
   youtube?: string;
   file?: string;
+  /* Who made the recording and its licence, shown small in the card. */
+  credit?: string;
+  creditUrl?: string;
 };
 
 export type Headings = {

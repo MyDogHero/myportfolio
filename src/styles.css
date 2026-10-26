@@ -916,6 +916,27 @@ html[data-panel="right"] .np {
   font-size: 10.5px;
 }
 
+.np-credit {
+  margin-top: 6px;
+  color: var(--hud-ink-2);
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+.np-credit a {
+  text-decoration: underline;
+  text-decoration-color: rgba(236, 234, 226, 0.35);
+  text-underline-offset: 2px;
+}
+
+.np-credit a:hover {
+  color: var(--hud-ink);
+}
+
+.np[data-compact="true"] .np-credit {
+  display: none;
+}
+
 .np-problem {
   margin-top: 8px;
   color: #ffb4a8;
