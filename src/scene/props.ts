@@ -55,9 +55,9 @@ export const BOOK_HOLD = { position: v(0, 1.0, -0.31), tilt: -0.35 };
 export function buildPerson(options: { keys: THREE.Vector3 }) {
   const group = new THREE.Group();
 
-  const skin = std("#5b3a24", { roughness: 0.62 });
+  const skin = std("#8a5a3a", { roughness: 0.62 });
   const hair = std("#140e0a", { roughness: 0.55 });
-  const shirt = std("#9fb9dc", { roughness: 0.85 });
+  const shirt = std("#6B8EAD", { roughness: 0.85 });
   const trousers = std("#1f2733", { roughness: 0.8 });
   const shoes = std("#0c0e11", { roughness: 0.45 });
   const frames = std("#08090a", { roughness: 0.3, metalness: 0.3 });
