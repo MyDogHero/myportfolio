@@ -23,10 +23,12 @@ https://kaustubhiyer.netlify.app. See README.md for the file layout.
   → Experience, trophy shelf → Achievements, desk phone → Contact. Each has a
   floating blue ▼ marker (pointing down at it), an HTML label button (for keyboard and touch), a
   hover effect and a camera view (`hotspots` in `src/scene/room.ts`).
-- Two hotspots have no marker: the football opens the hidden `easter` route
+- Three hotspots have no marker: the football opens the hidden `easter` route
   (`/off-the-clock/`, kept out of the menu, sitemap and text version on
-  purpose), and the speaker (`radio`) opens the Now Playing card, but only when
-  `music.songs` in content.js is not empty.
+  purpose); the speaker (`radio`) opens the Now Playing card, but only when
+  `music.songs` in content.js is not empty; and the book on the couch
+  (`reading`, from `reading` in content.js) opens About, which shows a
+  "Currently reading" card. Its cover is drawn from the title and author.
 - The room follows the real time in Bengaluru (`src/scene/daylight.ts`;
   `?hour=13` previews another time): sky and skyline textures, sun/moon light,
   exposure and glow threshold change by phase, and the dog is awake 6:30–19:00.

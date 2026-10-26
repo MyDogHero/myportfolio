@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { bootDone, bootProgress } from "@/boot";
-import { music } from "@/content";
+import { music, reading } from "@/content";
 import { prefersReducedMotion, waitForFonts } from "@/motion";
 import { type RouteId, routes } from "@/router";
 import type { HotspotId } from "@/scene/room";
@@ -16,6 +16,7 @@ const hotspotIds: HotspotId[] = [
   "contact",
   "easter",
   ...(music.songs.length ? (["radio"] as const) : []),
+  ...(reading.title ? (["reading"] as const) : []),
 ];
 const pad = (n: number) => String(n).padStart(2, "0");
 
@@ -32,6 +33,9 @@ export function webglAvailable() {
 function labelFor(id: HotspotId, radioOn: boolean) {
   if (id === "radio") return { num: "♪", label: radioOn ? "Stop music" : "Play music", object: "Speaker", kind: "radio" };
   if (id === "easter") return { num: "?", label: "Kick it", object: "Football", kind: "secret" };
+  if (id === "reading") {
+    return { num: "Now", label: "Reading", object: [reading.title, reading.author].filter(Boolean).join(" · "), kind: "reading" };
+  }
   const index = routes.findIndex((item) => item.id === id);
   return { num: pad(index), label: routes[index].label, object: routes[index].object, kind: "section" };
 }
@@ -76,6 +80,7 @@ export function World({
 
   const choose = (id: HotspotId) => {
     if (id === "radio") radioRef.current();
+    else if (id === "reading") selectRef.current("about"); // the book opens About, where it's listed
     else selectRef.current(id);
   };
 
@@ -167,8 +172,14 @@ export function World({
               data-kind={kind}
               data-visible="false"
               data-hovered={hovered === id}
-              data-sound={kind === "section" ? undefined : "none"}
-              aria-label={kind === "secret" ? "Football: a hidden section" : undefined}
+              data-sound={kind === "section" || kind === "reading" ? undefined : "none"}
+              aria-label={
+                kind === "secret"
+                  ? "Football: a hidden section"
+                  : kind === "reading"
+                    ? `Currently reading: ${[reading.title, reading.author].filter(Boolean).join(" by ")}. Opens About`
+                    : undefined
+              }
               onClick={() => choose(id)}
               tabIndex={focus === "home" && ready ? 0 : -1}
             >

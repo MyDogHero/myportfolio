@@ -142,6 +142,8 @@ export type EasterEgg = {
   items: EasterItem[];
 };
 
+export type Reading = { title: string; author: string };
+
 export type Song = {
   title: string;
   artist?: string;
@@ -170,6 +172,7 @@ type Content = {
   highlights: Highlight[];
   focusAreas: FocusArea[];
   about: About;
+  reading: Reading;
   education: EducationRow[];
   skills: SkillGroup[];
   experienceHeadline: string;
@@ -365,6 +368,10 @@ export const easterEgg: EasterEgg = {
     .filter((item) => item && text(item.title))
     .map((item) => ({ ...item, link: link(item.link) })),
 };
+
+const readingRaw = (pick("reading") ?? {}) as Partial<Reading>;
+/* The book on the couch. An empty title hides it everywhere. */
+export const reading: Reading = { title: text(readingRaw.title), author: text(readingRaw.author) };
 
 const musicRaw = (pick("music") ?? {}) as Partial<{ title: string; songs: Song[] }>;
 export const music = {
